@@ -1,0 +1,34 @@
+{
+  "_doc": "LINE MCP multi-OA config. Copy this file to ~/.line-mcp/config.json (production) OR to .line-mcp.local.json in this folder (local-dev). Then point LINE_MCP_CONFIG at it, or let the server auto-find ~/.line-mcp/config.json.",
+
+  "default_oa": "main",
+
+  "oas": {
+    "main": {
+      "channel_access_token": "REPLACE_WITH_YOUR_MAIN_OA_CHANNEL_ACCESS_TOKEN",
+      "channel_secret": "REPLACE_WITH_YOUR_MAIN_OA_CHANNEL_SECRET_OR_REMOVE",
+      "display_name": "บริษัทหลัก",
+      "region": "TH",
+      "is_premium": false
+    },
+
+    "innovation_vantage": {
+      "channel_access_token": "REPLACE_WITH_TOKEN_FOR_INNOVATION_VANTAGE_OA",
+      "display_name": "Innovation Vantage",
+      "region": "TH"
+    },
+
+    "forgeai": {
+      "channel_access_token": "REPLACE_WITH_TOKEN_FOR_FORGEAI_OA",
+      "display_name": "ForgeAI",
+      "region": "TH"
+    },
+
+    "client_a_example": {
+      "channel_access_token": "REPLACE_WITH_CLIENT_A_TOKEN",
+      "display_name": "Client A — ตัวอย่าง",
+      "region": "TH",
+      "is_premium": false
+    }
+  }
+}
