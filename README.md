@@ -2,15 +2,14 @@
 
 # LINE OA MCP Ultimate
 
-**The most complete Model Context Protocol server for LINE Official Accounts.**
-Operate broadcasts, audiences, rich menus, Flex messages, coupons, and insights from any AI agent — without writing code.
+**Operate your LINE Official Account from any AI agent — through natural language.**
 
 [![npm version](https://img.shields.io/npm/v/line-oa-mcp-ultimate.svg)](https://www.npmjs.com/package/line-oa-mcp-ultimate)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%E2%89%A520-brightgreen.svg)](#requirements)
 [![MCP](https://img.shields.io/badge/MCP-1.x-purple.svg)](https://modelcontextprotocol.io)
 
-[Quick Start](#quick-start) · [Features](#features) · [Configuration](#configuration) · [Documentation](#documentation) · [Comparison](#comparison-vs-official-line-mcp)
+[Quick Start](#quick-start) · [What you can do](#what-you-can-do) · [Configuration](#configuration) · [Documentation](#documentation)
 
 </div>
 
@@ -18,54 +17,75 @@ Operate broadcasts, audiences, rich menus, Flex messages, coupons, and insights 
 
 ## What is this?
 
-`line-oa-mcp-ultimate` is an [MCP](https://modelcontextprotocol.io) server that exposes **27 tools, 4 resources, and 7 guided prompts** for LINE Official Accounts. Any MCP-compatible host — **Claude Cowork, Claude Code, Cursor, Codex, ChatGPT desktop**, or others — can drive your LINE OA through natural conversation.
+`line-oa-mcp-ultimate` is a [Model Context Protocol](https://modelcontextprotocol.io) server that lets AI agents drive your LINE Official Account through natural conversation — no code, no API knowledge required.
 
-Built with Thai SMBs, marketing agencies, course creators, and developers in mind. **Free-tier ready** — no Premium upgrade required for the core feature set.
+It works with **Claude Cowork, Claude Code, Cursor, Codex, ChatGPT desktop**, or any MCP-compatible host.
 
 > **Disclaimer:** This is an independent open-source project. It is **not affiliated with or endorsed by LY Corporation / LINE Corp**. "LINE" is a registered trademark of LY Corporation, used here in a descriptive sense.
 
 ---
 
-## Why?
+## Why use it?
 
-LINE's official MCP server ships ~12 tools — about 10% of the Messaging API surface. That leaves out almost everything marketers and SMBs actually need every day: narrowcast targeting, audience management, insight reports, Flex Message design, coupon analytics, multi-OA orchestration, and the killer pattern of handing off scheduled broadcasts to LINE OA Manager's native UI.
+LINE OA Manager works well — but it's a web UI you have to log into, click through, and operate manually. With this MCP server, the same operations become natural-language requests in your AI host of choice:
 
-This project covers **all of that**, in a tight install with zero infrastructure.
+| Instead of clicking through LINE OA Manager... | Just say... |
+|---|---|
+| Open broadcast composer → pick audience → write text → preview → schedule | "Send a Mother's Day promo to my Bangkok-based 25-44 female audience" |
+| Navigate Insight → Delivery → pick date range → screenshot | "Summarize last week's performance" |
+| Open Audience → create from upload → upload CSV → wait | "Create an audience from this CSV: customers_last_month.csv" |
+| Open Rich Menu → design tabs → upload images → set as default | "Build a Mother's Day rich menu and set it as default" |
+| Open Coupon → check usage tab → cross-reference clicks | "How many people redeemed my Mother's Day coupon?" |
+
+The MCP server takes care of LINE Messaging API calls, pre-flight validation, quota safety, quiet-hour warnings, and Thai-localized templates. You stay in your AI host and operate your OA the way you think about it — by intent.
 
 ---
 
-## Features
+## Who is it for?
 
-### 📨 Messaging (3 tools)
-Universal `send_message` covers 5 LINE transports (reply / push / multicast / narrowcast / broadcast) with 3 modes (`send_now`, `draft`, `dry_run`). Pre-flight validation, Quota Guardian, and quiet-hours guard built in.
+- 🪐 **AI-first marketers** who run a LINE OA from their AI workspace.
+- 🏪 **SMB owners** who already use LINE OA as their primary customer channel and want to automate routine work.
+- 🏢 **Marketing agencies** managing many client OAs from one dashboard.
+- 💻 **Developers** building LINE-integrated SaaS, automations, or AI bots.
 
-### 🎨 Rich Menu (4 tools)
-Build a rich menu in one call (create + upload image + set default). List, delete, and diagnose per-user menu visibility.
+**Free-tier ready** — no Premium upgrade required for the core feature set.
 
-### 💎 Flex Message (1 tool)
-Design Flex Messages from 8 Thai-localized templates (`receipt`, `voucher`, `shipping_update`, `promo_simple`, `thank_you`, ...) or raw JSON. Returns ready-to-send Flex JSON + LINE Flex Simulator preview URL.
+---
 
-### 🎯 Audience Management (4 tools)
-Build retargeting audiences from CSV or from prior broadcast engagement. The zero-CRM retargeting feature most SMBs never knew they had.
+## What you can do
 
-### 📊 Insights & Reports (4 tools)
-Quick OA status snapshot, weekly markdown reports, per-broadcast engagement stats, and pre-flight cost estimation.
+**27 tools + 4 resources + 7 guided prompts**, grouped by what you actually want to do:
+
+### 📨 Send messages (3 tools)
+One universal `send_message` covers every LINE transport (reply / push / multicast / narrowcast / broadcast). Three modes: `send_now`, `draft` (for scheduling via LINE OA Manager UI), and `dry_run` (validate + estimate cost without sending). Includes typing indicator and Thai-friendly sticker search.
+
+### 🎨 Rich Menus (4 tools)
+Build a rich menu in one call — create + upload image + set as default. List existing menus, delete with cleanup, or diagnose "why doesn't this user see my menu?".
+
+### 💎 Flex Messages (1 tool)
+Design Flex Messages from 8 Thai-localized templates (receipt, voucher, shipping update, promo, thank you, ...) or raw JSON. Returns ready-to-send Flex JSON plus a LINE Flex Simulator preview URL.
+
+### 🎯 Audiences (4 tools)
+Build retargeting audiences from a CSV or from prior broadcast engagement (people who clicked your previous send). The audience your CRM never had.
+
+### 📊 Insights (4 tools)
+Quick OA status snapshot, weekly markdown reports, per-broadcast engagement stats, and pre-flight send cost estimation.
 
 ### 🎟 Coupons (2 tools)
-Coupon CRUD + redemption analytics combining LINE coupon details and click-audience tracking.
+Create, list, get, and discontinue coupons. Pull redemption analytics by combining coupon details with click-audience tracking.
 
 ### 🔌 Webhook (1 tool)
-Test the OA's webhook URL and report LINE's signature verification result.
+Test your OA's webhook URL and surface LINE's signature verification result — quick to diagnose "why isn't my bot responding?".
 
-### 👤 Operations & Multi-OA (5 tools)
-Profile lookup, follower listing (Premium-gated), multi-OA orchestration with `run_on_many_oas` — operate dozens of client OAs from one MCP instance.
+### 👤 Operations (5 tools)
+User profile lookup, follower listing, multi-OA listing and switching, and `run_on_many_oas` for agencies that need to run a read-only tool across all client OAs in parallel.
 
 ### 💻 Developer Pack (3 tools)
-LIFF app lifecycle management plus code generators for LIFF SDK init (5 frameworks) and full LINE Login OAuth scaffold.
+LIFF lifecycle management plus code generators for LIFF SDK init (5 frameworks) and a full LINE Login OAuth scaffold.
 
-**Resources:** auto-refreshing OA snapshot, Flex template catalog, mood-indexed sticker catalog, Thai festival calendar with marketing promo patterns.
+**Resources** — auto-refreshing OA snapshot, Flex template catalog, sticker catalog with mood-keyword index, and a Thai festival calendar with marketing promo patterns.
 
-**Prompts:** `daily-oa-report`, `build-campaign`, `schedule-broadcast-howto`, `diagnose-rich-menu`, `coupon-campaign`, `migrate-from-line-notify`, `webhook-setup-guide`.
+**Prompts** — guided workflows for daily reports, campaign building, broadcast scheduling, rich menu diagnosis, coupon campaigns, LINE Notify migration, and webhook setup.
 
 ---
 
@@ -77,7 +97,7 @@ LIFF app lifecycle management plus code generators for LIFF SDK init (5 framewor
 - A LINE Official Account with Messaging API enabled
 - A Channel Access Token
 
-**No** database, Playwright, CDN, public URL, or scheduler infrastructure required.
+No database, no Playwright, no CDN, no public URL, no scheduler infrastructure required.
 
 ### Step 1 — Get your Channel Access Token
 
@@ -86,11 +106,11 @@ LIFF app lifecycle management plus code generators for LIFF SDK init (5 framewor
 3. Open the **Messaging API** tab → scroll to **Channel access token** → click **Issue**.
 4. Copy the long-lived token. Treat it like a password.
 
-For a walkthrough, see [LINE's official getting started guide](https://developers.line.biz/en/docs/messaging-api/getting-started/).
+If you don't yet have a LINE Official Account, follow [LINE's getting started guide](https://developers.line.biz/en/docs/messaging-api/getting-started/).
 
 ### Step 2 — Add the MCP server to your AI host
 
-Add the following block to your host's MCP config file:
+Paste the following block into your host's MCP config file (see table below):
 
 ```json
 {
@@ -106,7 +126,7 @@ Add the following block to your host's MCP config file:
 }
 ```
 
-**Config file location by host:**
+**Where to find the config file:**
 
 | Host | Where to add it |
 |---|---|
@@ -116,11 +136,11 @@ Add the following block to your host's MCP config file:
 | **Claude Code** | Run `claude mcp add line` or edit `~/.config/claude/mcp.json` |
 | **Cursor / Codex / ChatGPT desktop** | See your host's MCP setup docs — same JSON shape |
 
-> ⚠️ **Don't overwrite existing MCP servers** — add the `"line"` entry alongside any existing entries inside `mcpServers`.
+> ⚠️ **Don't replace existing MCP servers.** Add the `"line"` entry alongside any existing entries inside `mcpServers`.
 
 ### Step 3 — Restart your AI host
 
-Quit completely (Cmd+Q on macOS) and reopen. The host runs `npx -y line-oa-mcp-ultimate` on first start, downloads the package from npm, caches it, and is ready to use.
+Quit completely (Cmd+Q on macOS) and reopen. On first start the host runs `npx -y line-oa-mcp-ultimate`, downloads the package from npm, and caches it for subsequent starts.
 
 ### Step 4 — Verify
 
@@ -136,19 +156,26 @@ or in Thai:
 ดูสถานะ OA หน่อย
 ```
 
-You should see a health card with friend count, monthly quota, webhook status, and the default rich menu. That's it — you're now operating LINE OA from your AI agent.
+You should see a health card with friend count, monthly quota, webhook status, and the default rich menu. That's it — you're now operating your LINE OA from your AI agent.
 
 ---
 
 ## Configuration
 
-### Single-OA mode (default)
+### Single-OA mode (default — for most users)
 
-Use a single environment variable in your MCP config — that's the **Step 2** snippet above. Suitable for individual creators or single-business owners.
+That's the **Step 2** snippet above. One environment variable, one OA. Suitable for individual creators, course makers, and most SMB owners.
 
 ### Multi-OA mode (for agencies)
 
-Create `~/.line-mcp/config.json`:
+If you manage several LINE OAs (your own plus client accounts), copy the `config.example.json` shipped with this repo to your home directory:
+
+```bash
+mkdir -p ~/.line-mcp
+cp config.example.json ~/.line-mcp/config.json
+```
+
+Open `~/.line-mcp/config.json` and fill in one entry per OA:
 
 ```json
 {
@@ -167,18 +194,17 @@ Create `~/.line-mcp/config.json`:
 }
 ```
 
-Then drop `LINE_CHANNEL_ACCESS_TOKEN` from your MCP config — the server discovers `~/.line-mcp/config.json` automatically.
+Then **drop the `LINE_CHANNEL_ACCESS_TOKEN` env var** from your MCP config — the server discovers `~/.line-mcp/config.json` automatically.
 
-A copy-ready template lives in [`config.example.json`](config.example.json). The multi-OA loader resolution order:
+Resolution order:
 
 1. `LINE_MCP_CONFIG` env var (custom path)
 2. `~/.line-mcp/config.json`
 3. `LINE_CHANNEL_ACCESS_TOKEN` env var (single-OA fallback)
-4. Error
 
-### Switching active OA at runtime
+### Switching the active OA at runtime
 
-Use the `line_use_oa` tool in your AI host:
+Ask your AI host:
 
 ```
 "Switch to client_a"
@@ -200,29 +226,7 @@ For agencies running a shared remote instance, the server also supports Streamab
 | [docs/quickstart-th.md](docs/quickstart-th.md) | Thai-language quick start (5-minute walkthrough) |
 | [docs/multi-oa-setup-th.md](docs/multi-oa-setup-th.md) | Multi-OA configuration guide (Thai) |
 | [docs/http-transport.md](docs/http-transport.md) | Streamable HTTP transport for self-hosted / remote use |
-| [examples/](examples/) | Runnable examples — Cloudflare Worker webhook router for fan-out to multiple downstream services |
-
----
-
-## Comparison vs Official LINE MCP
-
-| Feature | Official `@line/line-bot-mcp-server` | `line-oa-mcp-ultimate` |
-|---|:---:|:---:|
-| Tool count | ~12 | **27** |
-| Send unified (reply / push / multicast / narrowcast / broadcast) | Split into separate tools | ✅ One `send_message` tool |
-| Rich Menu — create + upload + default in one call | 4 atomic tools | ✅ One composite tool |
-| Flex Designer with Thai templates | ❌ | ✅ 8 templates + raw JSON |
-| Audience management (CSV / engagement / list / delete) | ❌ | ✅ 4 tools |
-| Narrowcast targeting (filter / audience) | ❌ | ✅ |
-| Insights / weekly reports (markdown) | Quota only | ✅ 4 tools |
-| Coupon CRUD + redemption analytics | ❌ | ✅ 2 tools |
-| Multi-OA orchestration | ❌ | ✅ 3 tools |
-| LIFF lifecycle + code emitters | ❌ | ✅ 3 tools |
-| Quota Guardian (pre-flight check) | ❌ | ✅ Built into `send_message` |
-| Quiet-hours guard (22:00–08:00 BKK) | ❌ | ✅ |
-| Reply-token auto-fallback to push | ❌ | ✅ |
-| LINE Messaging API coverage | ~10% | **~45%** |
-| Free-tier ready (no Premium required) | Partial | ✅ |
+| [examples/](examples/) | Runnable examples |
 
 ---
 
@@ -235,7 +239,7 @@ This project follows [Semantic Versioning](https://semver.org/). Current release
 ## Roadmap
 
 - **v1.x** — Outbound operations (current).
-- **v2.x** — Companion `line-oa-mcp-inbound` package: webhook ingestion via built-in tunnel, chat 1:1 reply, auto-reply rules, greeting messages, chat tags.
+- **v2.x** — Companion inbound package: webhook ingestion, chat 1:1 reply, auto-reply rules, greeting messages, chat tags.
 - **v3.x** — Hosted SaaS for agency multi-tenant use.
 
 ---
