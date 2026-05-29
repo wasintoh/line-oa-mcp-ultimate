@@ -1,6 +1,6 @@
 {
   "name": "line-oa-mcp-ultimate",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Operate your LINE Official Account from any AI agent through natural language. Send broadcasts, design Flex messages, build rich menus, manage audiences, run coupon campaigns, pull insights — all without writing code. Works with Claude Cowork, Claude Code, Cursor, Codex, ChatGPT desktop, and any MCP-compatible host.",
   "keywords": [
     "mcp",
