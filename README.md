@@ -262,8 +262,8 @@ When contributing:
 
 **Dr. Wasin Treesinthuros** (พี่โต / Dr. Wasin / #จารโต)
 
-- CEO at [Innovation Vantage](https://innovation-vantage.com)
-- Founder at [ForgeAI — AI Transformation Studio](https://forgeai.co)
+- CEO at Innovation Vantage
+- Founder at ForgeAI — AI Transformation Studio
 - LINE Certified Coach 2026
 - AI Transformation educator, SaaS builder, university lecturer
 
