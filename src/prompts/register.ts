@@ -219,7 +219,7 @@ export function registerPrompts(server: McpServer): void {
             type: "text",
             text: `User ต้องการ set up webhook สำหรับรับ event ขาเข้าจาก LINE OA ช่วยแนะนำเป็นภาษาไทย:
 
-1. สถานะของ V1 MCP: outbound only — webhook ingestion ทำผ่าน external server (V2 จะมี @line-mcp/webhook-server)
+1. สถานะของ V1 MCP: outbound only — webhook ingestion ทำผ่าน external server (V2 จะมี companion package สำหรับ inbound/webhook)
 
 2. Setup webhook server:
    a. สร้าง HTTP server (Express / Hono / Cloudflare Workers / Vercel Functions)

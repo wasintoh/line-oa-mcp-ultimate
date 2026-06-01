@@ -1,6 +1,6 @@
 # HTTP transport (advanced / self-hosted)
 
-The standard install for `@line-mcp/server` is **stdio** — every MCP host (Cowork, Claude Desktop, Claude Code, Cursor, etc.) supports it natively via JSON config. **Most users should use stdio.**
+The standard install for `line-oa-mcp-ultimate` is **stdio** — every MCP host (Cowork, Claude Desktop, Claude Code, Cursor, etc.) supports it natively via JSON config. **Most users should use stdio.**
 
 This document is for the niche cases where you actually need HTTP:
 
@@ -12,6 +12,14 @@ This document is for the niche cases where you actually need HTTP:
 
 ## Run in HTTP mode
 
+Install via `npx` (no repo clone needed) — just set `MCP_TRANSPORT=http`:
+
+```bash
+LINE_CHANNEL_ACCESS_TOKEN="YOUR_TOKEN" MCP_TRANSPORT=http npx -y line-oa-mcp-ultimate
+```
+
+Or, if you cloned the repo and built it yourself, use the bundled script:
+
 ```bash
 LINE_CHANNEL_ACCESS_TOKEN="YOUR_TOKEN" npm run start:http
 ```
@@ -19,8 +27,8 @@ LINE_CHANNEL_ACCESS_TOKEN="YOUR_TOKEN" npm run start:http
 You should see:
 
 ```
-[line-mcp-server v0.1.0] Loaded 1 OA(s). Default: "default".
-[line-mcp-server] Ready (http) — http://127.0.0.1:3000/mcp
+[line-oa-mcp-ultimate v1.0.3] Loaded 1 OA(s). Default: "default".
+[line-oa-mcp-ultimate] Ready (http) — http://127.0.0.1:3000/mcp
   Health: http://127.0.0.1:3000/health
 ```
 
@@ -28,7 +36,7 @@ Verify the server is healthy:
 
 ```bash
 curl http://127.0.0.1:3000/health
-# → {"ok":true,"name":"line-mcp-server","version":"0.1.0"}
+# → {"ok":true,"name":"line-oa-mcp-ultimate","version":"1.0.3"}
 ```
 
 ## Configuration

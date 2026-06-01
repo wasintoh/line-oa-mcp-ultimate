@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Entry point for `line-mcp-server`.
+ * Entry point for `line-oa-mcp-ultimate`.
  *
  * Runs an MCP server in one of two transports — chosen via the
  * MCP_TRANSPORT env var (or --http / --stdio CLI flag):

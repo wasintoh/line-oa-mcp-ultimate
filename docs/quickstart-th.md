@@ -27,17 +27,7 @@
 
 ### 2. เพิ่ม MCP เข้า Claude Cowork (1 นาที)
 
-ใช้ทาง **stdio + Edit Config** ของ Cowork — เป็นทางมาตรฐาน ไม่ต้องรัน terminal ค้างไว้
-
-**ขั้น 2.1 — Build (ครั้งเดียว)**
-
-```bash
-cd ~/Dev/AboutME/line-mcp-server
-npm install
-npm run build
-```
-
-**ขั้น 2.2 — Edit Config ใน Cowork**
+ใช้ทาง **stdio + Edit Config** ของ Cowork — เป็นทางมาตรฐาน ไม่ต้องรัน terminal ค้างไว้ และ **ไม่ต้อง clone repo หรือ build เอง** เพราะ `npx` จะดึง package จาก npm มารันให้อัตโนมัติ
 
 1. เปิด **Cowork** → **Settings** (⚙️) → **Developer** → **Local MCP servers**
 2. กด **Edit Config** — จะเปิด `claude_desktop_config.json` ใน editor
@@ -47,8 +37,8 @@ npm run build
    {
      "mcpServers": {
        "line": {
-         "command": "node",
-         "args": ["/Users/wasin/Dev/AboutME/line-mcp-server/dist/index.js"],
+         "command": "npx",
+         "args": ["-y", "line-oa-mcp-ultimate"],
          "env": {
            "LINE_CHANNEL_ACCESS_TOKEN": "YOUR_TOKEN"
          }
@@ -58,7 +48,7 @@ npm run build
    ```
 
 4. **บันทึก** ไฟล์
-5. **Restart Cowork** — เปิดหน้า Developer อีกครั้ง จะเห็น `line` พร้อม status `running`
+5. **Restart Cowork** (ปิดทั้งแอปด้วย `⌘ + Q` แล้วเปิดใหม่) — รอบแรก `npx` จะดาวน์โหลด package จาก npm (ใช้เวลาสักครู่ ต้องมีอินเทอร์เน็ต) แล้ว cache ไว้ รอบต่อไปเปิดได้เร็ว จากนั้นเปิดหน้า Developer อีกครั้ง จะเห็น `line` พร้อม status `running`
 
 ### 3. ลองสั่งงาน Cowork (2 นาที)
 
@@ -128,6 +118,6 @@ npm run build
 
 ## ต่อยอด
 
-- ตั้ง config multi-OA (agency) — ดู [`README.md`](../README.md#multi-oa-configuration)
-- ดู recipe ละเอียดที่ [`docs/recipes/`](recipes/)
-- รายงาน issue / feature request ที่ GitHub
+- ตั้ง config multi-OA (สำหรับ agency หรือคนมีหลาย OA) — ดู [`multi-oa-setup-th.md`](multi-oa-setup-th.md)
+- รัน MCP แบบ HTTP / self-hosted — ดู [`http-transport.md`](http-transport.md)
+- รายงาน issue / feature request ที่ [GitHub](https://github.com/wasintoh/line-oa-mcp-ultimate/issues)

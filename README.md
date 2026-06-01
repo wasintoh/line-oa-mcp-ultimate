@@ -19,6 +19,8 @@
 
 `line-oa-mcp-ultimate` is a [Model Context Protocol](https://modelcontextprotocol.io) server that lets AI agents drive your LINE Official Account through natural conversation — no code, no API knowledge required.
 
+Manage **one OA or many** — a single account needs just one env var, while agencies can register every client OA in one config file and switch between them with a single command (see [Configuration](#configuration)).
+
 It works with **Claude Cowork, Claude Code, Cursor, Codex, ChatGPT desktop**, or any MCP-compatible host.
 
 > **Disclaimer:** This is an independent open-source project. It is **not affiliated with or endorsed by LY Corporation / LINE Corp**. "LINE" is a registered trademark of LY Corporation, used here in a descriptive sense.
@@ -168,14 +170,16 @@ That's the **Step 2** snippet above. One environment variable, one OA. Suitable 
 
 ### Multi-OA mode (for agencies)
 
-If you manage several LINE OAs (your own plus client accounts), copy the `config.example.json` shipped with this repo to your home directory:
+If you manage several LINE OAs (your own plus client accounts), create a JSON config file at `~/.line-mcp/config.json` — the server auto-discovers it, so there's nothing to clone or build:
 
 ```bash
 mkdir -p ~/.line-mcp
-cp config.example.json ~/.line-mcp/config.json
+nano ~/.line-mcp/config.json     # or: code ~/.line-mcp/config.json
 ```
 
-Open `~/.line-mcp/config.json` and fill in one entry per OA:
+> 📘 Full walkthrough (two placement options + security notes) in [`docs/multi-oa-setup-th.md`](docs/multi-oa-setup-th.md). A ready-to-edit template lives in [`config.example.json`](config.example.json).
+
+Fill in one entry per OA:
 
 ```json
 {
@@ -232,7 +236,7 @@ For agencies running a shared remote instance, the server also supports Streamab
 
 ## Versioning
 
-This project follows [Semantic Versioning](https://semver.org/). Current release: **v1.0.0**.
+This project follows [Semantic Versioning](https://semver.org/). Current release: **v1.0.3**.
 
 ---
 
