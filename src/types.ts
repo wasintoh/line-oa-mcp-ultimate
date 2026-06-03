@@ -67,10 +67,55 @@ export interface LineFlexMessage {
   contents: Record<string, unknown>;
 }
 
+// Video message (originalContentUrl must be HTTPS mp4 ≤200MB on a range-request host).
+// trackingId (optional) fires the videoPlayComplete webhook.
+export interface LineVideoMessage {
+  type: "video";
+  originalContentUrl: string;
+  previewImageUrl: string;
+  trackingId?: string;
+}
+
+// Imagemap area action (LINE OA Manager calls these "Rich Message").
+export interface LineImagemapAction {
+  type: "uri" | "message";
+  label?: string;
+  linkUri?: string; // for type:"uri"
+  text?: string; // for type:"message"
+  area: { x: number; y: number; width: number; height: number };
+}
+
+// Imagemap message. baseUrl points to a hosted image set; LINE appends
+// /1040 /700 /460 /300 /240. baseSize.width MUST be 1040 (no upload API exists).
+export interface LineImagemapMessage {
+  type: "imagemap";
+  baseUrl: string;
+  altText: string;
+  baseSize: { width: number; height: number };
+  video?: {
+    originalContentUrl: string;
+    previewImageUrl: string;
+    area: { x: number; y: number; width: number; height: number };
+    externalLink?: { linkUri: string; label: string };
+  };
+  actions: LineImagemapAction[];
+}
+
+// Template message (LINE OA Manager calls these "Card Message"):
+// buttons | confirm | carousel | image_carousel.
+export interface LineTemplateMessage {
+  type: "template";
+  altText: string;
+  template: Record<string, unknown>;
+}
+
 export type LineMessage =
   | LineTextMessage
   | LineStickerMessage
   | LineImageMessage
+  | LineVideoMessage
+  | LineImagemapMessage
+  | LineTemplateMessage
   | LineFlexMessage;
 
 export interface LineQuickReplyItem {
@@ -152,6 +197,8 @@ export interface OaStatusOutput {
     url?: string;
   };
   default_rich_menu?: { id: string; name?: string };
+  chat_mode?: string; // "bot" = auto-respond (Messaging API owns replies) | "chat" = manual operator chat on
+  mark_as_read_mode?: string; // "auto" (Chat off) | "manual" (Chat on)
   region?: string;
   health: "OK" | "WARNING" | "ERROR";
   warnings: string[];

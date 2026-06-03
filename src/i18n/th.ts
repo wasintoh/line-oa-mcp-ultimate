@@ -20,7 +20,7 @@ export const TH = {
 
   // ---- Reply token ----
   replyTokenExpiredFallback:
-    "💡 Reply token หมดอายุ (มีอายุ ~30 วินาที) — ส่งเป็น push message แทนอัตโนมัติ (ใช้ quota +1)",
+    "💡 Reply token หมดอายุ (มีอายุ ~1 นาที) — ส่งเป็น push message แทนอัตโนมัติ (ใช้ quota +1)",
 
   // ---- Narrowcast / Audience ----
   audienceBelowMinimum: (size: number) =>

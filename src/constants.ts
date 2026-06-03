@@ -12,7 +12,7 @@ export const LINE_API_DATA_BASE = "https://api-data.line.me"; // for content / a
 
 // ---- Server identity ----
 export const SERVER_NAME = "line-oa-mcp-ultimate";
-export const SERVER_VERSION = "1.0.3";
+export const SERVER_VERSION = "1.1.0";
 
 // ---- Response sizing ----
 export const CHARACTER_LIMIT = 25_000; // truncate responses beyond this size
@@ -70,3 +70,19 @@ export const RICH_MENU_IMAGE_MAX_BYTES = 1_000_000;
 // ---- Insight privacy floor ----
 // LINE returns null on demographic/insight queries below this threshold.
 export const INSIGHT_PRIVACY_FLOOR_USERS = 20;
+
+// ---- v2: Rich menu per-user ops ----
+// LINE bulk link/unlink accepts max 500 user IDs per request; we auto-chunk.
+export const RICHMENU_BULK_MAX_USERS = 500;
+
+// ---- v2: Imagemap message (OA Manager "Rich Message") ----
+// baseSize.width must be exactly 1040; LINE serves /1040 /700 /460 /300 /240 from baseUrl.
+export const IMAGEMAP_BASE_WIDTH = 1040;
+export const IMAGEMAP_VIDEO_MAX_BYTES = 10_000_000; // 10MB, ≤1min mp4
+
+// ---- v2: Template message (OA Manager "Card Message") ----
+export const TEMPLATE_BUTTONS_MAX_ACTIONS = 4;
+export const TEMPLATE_CONFIRM_ACTIONS = 2;
+export const TEMPLATE_CAROUSEL_MAX_COLUMNS = 10;
+export const TEMPLATE_CAROUSEL_MAX_ACTIONS_PER_COLUMN = 3;
+export const TEMPLATE_IMAGE_CAROUSEL_MAX_COLUMNS = 10;

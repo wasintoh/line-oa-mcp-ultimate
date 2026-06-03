@@ -27,7 +27,7 @@ LINE_CHANNEL_ACCESS_TOKEN="YOUR_TOKEN" npm run start:http
 You should see:
 
 ```
-[line-oa-mcp-ultimate v1.0.3] Loaded 1 OA(s). Default: "default".
+[line-oa-mcp-ultimate v1.0.4] Loaded 1 OA(s). Default: "default".
 [line-oa-mcp-ultimate] Ready (http) — http://127.0.0.1:3000/mcp
   Health: http://127.0.0.1:3000/health
 ```
@@ -36,7 +36,7 @@ Verify the server is healthy:
 
 ```bash
 curl http://127.0.0.1:3000/health
-# → {"ok":true,"name":"line-oa-mcp-ultimate","version":"1.0.3"}
+# → {"ok":true,"name":"line-oa-mcp-ultimate","version":"1.0.4"}
 ```
 
 ## Configuration

@@ -126,6 +126,11 @@ Examples:
             ? { id: defaultMenuRef.value.richMenuId }
             : undefined;
 
+        const chatMode =
+          botInfo.status === "fulfilled" ? botInfo.value.chatMode : undefined;
+        const markAsReadMode =
+          botInfo.status === "fulfilled" ? botInfo.value.markAsReadMode : undefined;
+
         const health: OaStatusOutput["health"] =
           warnings.length === 0 ? "OK" : warnings.length < 2 ? "WARNING" : "ERROR";
 
@@ -134,6 +139,8 @@ Examples:
           quota: quotaSnap,
           webhook: webhookSnap,
           default_rich_menu: defaultMenu,
+          chat_mode: chatMode,
+          mark_as_read_mode: markAsReadMode,
           region: config.region,
           health,
           warnings,
@@ -175,6 +182,13 @@ function renderMarkdown(o: OaStatusOutput): string {
     lines.push(`- 🎨 Default Rich Menu: ${o.default_rich_menu.id}`);
   } else {
     lines.push("- 🎨 Default Rich Menu: (ไม่มี — ใช้ line_build_rich_menu สร้าง)");
+  }
+  if (o.chat_mode) {
+    const modeLabel =
+      o.chat_mode === "bot" ? "bot (ตอบอัตโนมัติผ่าน API)" : "chat (เปิดแชทให้คนตอบ)";
+    lines.push(
+      `- 💬 Chat mode: ${modeLabel}${o.mark_as_read_mode ? ` · mark-as-read: ${o.mark_as_read_mode}` : ""}`,
+    );
   }
   if (o.region) {
     lines.push(`- 🌏 Region: ${o.region}`);

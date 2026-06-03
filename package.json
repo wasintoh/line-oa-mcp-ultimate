@@ -1,7 +1,7 @@
 {
   "name": "line-oa-mcp-ultimate",
-  "version": "1.0.3",
-  "description": "Operate one or many LINE Official Accounts from any AI agent through natural language. Send broadcasts, design Flex messages, build rich menus, manage audiences, run coupon campaigns, pull insights, and switch between multiple OAs (agency-ready) — all without writing code. Works with Claude Cowork, Claude Code, Cursor, Codex, ChatGPT desktop, and any MCP-compatible host.",
+  "version": "1.1.0",
+  "description": "Operate one or many LINE Official Accounts from any AI agent through natural language. Send broadcasts, design Flex messages, build rich menus, manage audiences, run coupon campaigns, pull insights, and switch between multiple OAs (agency-ready) — all without writing code. Works with Claude Cowork, Claude Code, Cursor, Codex, ChatGPT desktop, OpenClaw, Hermes, and any MCP-compatible host.",
   "keywords": [
     "mcp",
     "mcp-server",

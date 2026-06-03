@@ -361,8 +361,16 @@ export class LineClient {
     return this.request("POST", "/v2/bot/coupon", { body });
   }
 
-  listCoupons(): Promise<{ coupons: Array<Record<string, unknown>> }> {
-    return this.request("GET", "/v2/bot/coupon");
+  listCoupons(status?: string): Promise<{
+    items?: Array<Record<string, unknown>>;
+    coupons?: Array<Record<string, unknown>>;
+    next?: string;
+  }> {
+    // LINE returns a pager response: { items: [...], next?: "..." }.
+    // Older assumptions used `coupons`; we read either to stay robust.
+    return this.request("GET", "/v2/bot/coupon", {
+      query: status ? { status } : undefined,
+    });
   }
 
   getCoupon(couponId: string): Promise<Record<string, unknown>> {
@@ -399,6 +407,175 @@ export class LineClient {
 
   deleteLiffApp(liffId: string): Promise<unknown> {
     return this.request("DELETE", `/liff/v1/apps/${encodeURIComponent(liffId)}`);
+  }
+
+  // ---- rich menu: per-user link (v2) ----
+
+  linkRichMenuToUser(userId: string, richMenuId: string): Promise<unknown> {
+    return this.request(
+      "POST",
+      `/v2/bot/user/${encodeURIComponent(userId)}/richmenu/${encodeURIComponent(richMenuId)}`,
+    );
+  }
+
+  unlinkRichMenuFromUser(userId: string): Promise<unknown> {
+    return this.request("DELETE", `/v2/bot/user/${encodeURIComponent(userId)}/richmenu`);
+  }
+
+  bulkLinkRichMenu(richMenuId: string, userIds: string[]): Promise<unknown> {
+    return this.request("POST", "/v2/bot/richmenu/bulk/link", {
+      body: { richMenuId, userIds },
+    });
+  }
+
+  bulkUnlinkRichMenu(userIds: string[]): Promise<unknown> {
+    return this.request("POST", "/v2/bot/richmenu/bulk/unlink", {
+      body: { userIds },
+    });
+  }
+
+  // ---- rich menu: default (v2) ----
+
+  setDefaultRichMenu(richMenuId: string): Promise<unknown> {
+    return this.request(
+      "POST",
+      `/v2/bot/user/all/richmenu/${encodeURIComponent(richMenuId)}`,
+    );
+  }
+
+  clearDefaultRichMenu(): Promise<unknown> {
+    return this.request("DELETE", "/v2/bot/user/all/richmenu");
+  }
+
+  // ---- rich menu: image upload to existing menu (api-data domain, raw body) (v2) ----
+
+  async uploadRichMenuImage(
+    richMenuId: string,
+    image: Buffer,
+    contentType: string,
+  ): Promise<void> {
+    const url = new URL(
+      `/v2/bot/richmenu/${encodeURIComponent(richMenuId)}/content`,
+      this.apiDataBase,
+    );
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        "Content-Type": contentType,
+      },
+      body: image,
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LineApiError(res.status, text ? safeJson(text) : { message: "upload failed" });
+    }
+  }
+
+  // ---- rich menu alias (v2) ----
+
+  createRichMenuAlias(richMenuAliasId: string, richMenuId: string): Promise<unknown> {
+    return this.request("POST", "/v2/bot/richmenu/alias", {
+      body: { richMenuAliasId, richMenuId },
+    });
+  }
+
+  updateRichMenuAlias(richMenuAliasId: string, richMenuId: string): Promise<unknown> {
+    return this.request(
+      "POST",
+      `/v2/bot/richmenu/alias/${encodeURIComponent(richMenuAliasId)}`,
+      { body: { richMenuId } },
+    );
+  }
+
+  deleteRichMenuAlias(richMenuAliasId: string): Promise<unknown> {
+    return this.request(
+      "DELETE",
+      `/v2/bot/richmenu/alias/${encodeURIComponent(richMenuAliasId)}`,
+    );
+  }
+
+  getRichMenuAlias(
+    richMenuAliasId: string,
+  ): Promise<{ richMenuAliasId: string; richMenuId: string }> {
+    return this.request(
+      "GET",
+      `/v2/bot/richmenu/alias/${encodeURIComponent(richMenuAliasId)}`,
+    );
+  }
+
+  listRichMenuAliases(): Promise<{
+    aliases: { richMenuAliasId: string; richMenuId: string }[];
+  }> {
+    return this.request("GET", "/v2/bot/richmenu/alias/list");
+  }
+
+  // ---- audience mutation (v2) ----
+
+  addAudienceUsers(body: {
+    audienceGroupId: number;
+    audiences: { id: string }[];
+    uploadDescription?: string;
+  }): Promise<unknown> {
+    return this.request("PUT", "/v2/bot/audienceGroup/upload", { body });
+  }
+
+  renameAudience(audienceGroupId: number, description: string): Promise<unknown> {
+    return this.request(
+      "PUT",
+      `/v2/bot/audienceGroup/${audienceGroupId}/updateDescription`,
+      { body: { description } },
+    );
+  }
+
+  // ---- webhook endpoint: set (v2; get/test already above) ----
+
+  setWebhookEndpoint(endpoint: string): Promise<unknown> {
+    return this.request("PUT", "/v2/bot/channel/webhook/endpoint", {
+      body: { endpoint },
+    });
+  }
+
+  // ---- narrowcast progress (v2) ----
+
+  getNarrowcastProgress(requestId: string): Promise<{
+    phase: string;
+    successCount?: number;
+    failureCount?: number;
+    targetCount?: number;
+    failedDescription?: string;
+    errorCode?: number;
+    acceptedTime?: string;
+    completedTime?: string;
+  }> {
+    return this.request("GET", "/v2/bot/message/progress/narrowcast", {
+      query: { requestId },
+    });
+  }
+
+  // ---- account link token (v2) ----
+
+  issueLinkToken(userId: string): Promise<{ linkToken: string }> {
+    return this.request("POST", `/v2/bot/user/${encodeURIComponent(userId)}/linkToken`);
+  }
+
+  // ---- token verify (v2; access_token as query param, no Bearer) ----
+
+  async verifyAccessToken(accessToken?: string): Promise<{
+    client_id: string;
+    expires_in: number;
+    scope?: string;
+  }> {
+    const token = accessToken ?? this.token;
+    const url = new URL("/oauth2/v2.1/verify", this.apiBase);
+    url.searchParams.set("access_token", token);
+    const res = await fetch(url, { method: "GET", headers: { Accept: "application/json" } });
+    const text = await res.text();
+    const body = text ? safeJson(text) : {};
+    if (!res.ok) {
+      throw new LineApiError(res.status, body);
+    }
+    return body as { client_id: string; expires_in: number; scope?: string };
   }
 }
 

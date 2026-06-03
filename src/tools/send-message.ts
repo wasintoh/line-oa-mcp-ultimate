@@ -85,6 +85,55 @@ const MessageSchema = z.union([
         .strict(),
     })
     .strict(),
+  // Native LINE coupon (created via line_manage_coupon)
+  z
+    .object({
+      coupon_id: z.string().min(1),
+      delivery_tag: z
+        .string()
+        .max(30)
+        .regex(/^[A-Za-z0-9_]+$/, "delivery_tag: a-z A-Z 0-9 _ เท่านั้น")
+        .optional()
+        .describe("Insight path label (≤30, [A-Za-z0-9_])."),
+    })
+    .strict(),
+  // Image message (both URLs HTTPS + user-hosted; no upload API)
+  z
+    .object({
+      image: z
+        .object({
+          original_content_url: z.string().url().describe("HTTPS JPEG/PNG, the full-size image"),
+          preview_image_url: z.string().url().describe("HTTPS JPEG/PNG, the preview thumbnail"),
+        })
+        .strict(),
+    })
+    .strict(),
+  // Video message (mp4 ≤200MB on an HTTPS range-request host; tracking_id fires videoPlayComplete)
+  z
+    .object({
+      video: z
+        .object({
+          original_content_url: z.string().url().describe("HTTPS mp4, ≤200MB, host must support range requests"),
+          preview_image_url: z.string().url().describe("HTTPS JPEG/PNG preview"),
+          tracking_id: z
+            .string()
+            .optional()
+            .describe("Optional; fires the videoPlayComplete webhook when the user finishes the video"),
+        })
+        .strict(),
+    })
+    .strict(),
+  // Pre-built LINE message object passthrough — from line_design_imagemap (Rich Message),
+  // line_design_card (Card Message), or line_design_flex. Must carry a valid `type`.
+  z
+    .object({
+      message_json: z
+        .record(z.unknown())
+        .describe(
+          "A complete LINE message object with a `type` field (imagemap | template | flex | text | sticker | image | video)",
+        ),
+    })
+    .strict(),
 ]);
 
 const InputSchema = z
@@ -93,7 +142,7 @@ const InputSchema = z
       "Who to send to. Pick one shape: { reply_to } | { user_id } | { user_ids[] } | { audience } | { filter } | { everyone: true }",
     ),
     message: MessageSchema.describe(
-      "What to send. Pick one shape: { text } | { template, data } | { flex_json, alt_text } | { sticker }",
+      "What to send. Pick one shape: { text } | { template, data } | { flex_json, alt_text } | { sticker } | { coupon_id }",
     ),
     mode: z
       .enum(["send_now", "draft", "dry_run"])
@@ -137,6 +186,41 @@ function buildLineMessages(message: Input["message"]): LineMessage[] {
         stickerId: message.sticker.sticker_id,
       },
     ];
+  }
+  if ("coupon_id" in message) {
+    const coupon: Record<string, unknown> = {
+      type: "coupon",
+      couponId: message.coupon_id,
+    };
+    if (message.delivery_tag) coupon.deliveryTag = message.delivery_tag;
+    return [coupon as unknown as LineMessage];
+  }
+  if ("image" in message) {
+    return [
+      {
+        type: "image",
+        originalContentUrl: message.image.original_content_url,
+        previewImageUrl: message.image.preview_image_url,
+      },
+    ];
+  }
+  if ("video" in message) {
+    const video: Record<string, unknown> = {
+      type: "video",
+      originalContentUrl: message.video.original_content_url,
+      previewImageUrl: message.video.preview_image_url,
+    };
+    if (message.video.tracking_id) video.trackingId = message.video.tracking_id;
+    return [video as unknown as LineMessage];
+  }
+  if ("message_json" in message) {
+    const obj = message.message_json as Record<string, unknown>;
+    if (typeof obj.type !== "string" || obj.type.length === 0) {
+      throw new Error(
+        "message_json ต้องมี field `type` (เช่น imagemap, template, flex) — ใช้ output จาก line_design_imagemap / line_design_card / line_design_flex",
+      );
+    }
+    return [obj as unknown as LineMessage];
   }
   if ("template" in message) {
     const flex = renderTemplate(message.template, message.data ?? {});
@@ -189,6 +273,7 @@ Message shapes (pick one):
   - { template: "voucher", data: {...} }     — pre-built Thai-localized Flex template
   - { flex_json: {...}, alt_text: "..." }    — raw Flex JSON (advanced)
   - { sticker: { package_id, sticker_id } }  — LINE sticker
+  - { coupon_id: "01..." , delivery_tag? }   — native LINE coupon (from line_manage_coupon)
 
 Auto-applied safety:
   - Pre-flight validation via LINE /validate (catches JSON errors before consuming quota)

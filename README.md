@@ -21,7 +21,7 @@
 
 Manage **one OA or many** — a single account needs just one env var, while agencies can register every client OA in one config file and switch between them with a single command (see [Configuration](#configuration)).
 
-It works with **Claude Cowork, Claude Code, Cursor, Codex, ChatGPT desktop**, or any MCP-compatible host.
+It works with **Claude Cowork, Claude Code, Cursor, Codex, ChatGPT desktop, OpenClaw, Hermes**, or any MCP-compatible host.
 
 > **Disclaimer:** This is an independent open-source project. It is **not affiliated with or endorsed by LY Corporation / LINE Corp**. "LINE" is a registered trademark of LY Corporation, used here in a descriptive sense.
 
@@ -56,34 +56,34 @@ The MCP server takes care of LINE Messaging API calls, pre-flight validation, qu
 
 ## What you can do
 
-**27 tools + 4 resources + 7 guided prompts**, grouped by what you actually want to do:
+**34 tools + 4 resources + 7 guided prompts**, grouped by what you actually want to do:
 
-### 📨 Send messages (3 tools)
-One universal `send_message` covers every LINE transport (reply / push / multicast / narrowcast / broadcast). Three modes: `send_now`, `draft` (for scheduling via LINE OA Manager UI), and `dry_run` (validate + estimate cost without sending). Includes typing indicator and Thai-friendly sticker search.
+### 📨 Send messages (2 tools)
+One universal `send_message` covers every LINE transport (reply / push / multicast / narrowcast / broadcast). Three modes: `send_now`, `draft` (for scheduling via LINE OA Manager UI), and `dry_run` (validate + estimate cost without sending). Message shapes: text, Flex (template or raw JSON), sticker, **image**, **video**, **native LINE coupon** (`{ coupon_id }`), and a `message_json` passthrough for pre-built Rich/Card messages. Plus Thai-friendly sticker search.
 
-### 🎨 Rich Menus (4 tools)
-Build a rich menu in one call — create + upload image + set as default. List existing menus, delete with cleanup, or diagnose "why doesn't this user see my menu?".
+### 🎨 Rich Menus (8 tools)
+Build a rich menu in one call (create + upload image + set as default), list, delete, and diagnose "why doesn't this user see my menu?". Full lifecycle too: **link/unlink** a menu to specific users or in bulk (auto-chunked at 500), **set/clear** the account default, manage rich-menu **aliases** (tab-switching menus), and **swap the image** on an existing menu.
 
-### 💎 Flex Messages (1 tool)
-Design Flex Messages from 8 Thai-localized templates (receipt, voucher, shipping update, promo, thank you, ...) or raw JSON. Returns ready-to-send Flex JSON plus a LINE Flex Simulator preview URL.
+### 💎 Message Design (3 tools)
+Design **Flex Messages** from 8 Thai-localized templates or raw JSON, build **Rich Messages** (`imagemap` — tappable image regions + optional video), and **Card Messages** (`template` — buttons / confirm / carousel / image_carousel). Each returns ready-to-send JSON you hand to `send_message`.
 
-### 🎯 Audiences (4 tools)
-Build retargeting audiences from a CSV or from prior broadcast engagement (people who clicked your previous send). The audience your CRM never had.
+### 🎯 Audiences (5 tools)
+Build retargeting audiences from a CSV or from prior broadcast engagement, list, delete — and **update** an existing audience (add users, rename).
 
-### 📊 Insights (4 tools)
-Quick OA status snapshot, weekly markdown reports, per-broadcast engagement stats, and pre-flight send cost estimation.
+### 📊 Insights (5 tools)
+Quick OA status snapshot (incl. chat mode), weekly markdown reports, per-broadcast engagement stats, pre-flight send-cost estimation, and **narrowcast delivery progress** ("did my blast finish?").
 
 ### 🎟 Coupons (2 tools)
-Create, list, get, and discontinue coupons. Pull redemption analytics by combining coupon details with click-audience tracking.
+Create, list, get, and discontinue native LINE coupons with `line_manage_coupon`, then broadcast a created coupon straight into chats as a native coupon message via `send_message` (`{ coupon_id }`). Pull redemption analytics by combining coupon details with click-audience tracking.
 
-### 🔌 Webhook (1 tool)
-Test your OA's webhook URL and surface LINE's signature verification result — quick to diagnose "why isn't my bot responding?".
+### 🔌 Webhook (2 tools)
+Test your OA's webhook URL and surface LINE's signature verification result, plus **set/get** the webhook endpoint — quick to wire up or diagnose "why isn't my bot responding?".
 
 ### 👤 Operations (5 tools)
 User profile lookup, follower listing, multi-OA listing and switching, and `run_on_many_oas` for agencies that need to run a read-only tool across all client OAs in parallel.
 
-### 💻 Developer Pack (3 tools)
-LIFF lifecycle management plus code generators for LIFF SDK init (5 frameworks) and a full LINE Login OAuth scaffold.
+### 💻 LIFF & Token (2 tools)
+Manage LIFF app lifecycle (create / update / delete / list) and verify your channel access token's validity, expiry, and scope.
 
 **Resources** — auto-refreshing OA snapshot, Flex template catalog, sticker catalog with mood-keyword index, and a Thai festival calendar with marketing promo patterns.
 
@@ -236,15 +236,17 @@ For agencies running a shared remote instance, the server also supports Streamab
 
 ## Versioning
 
-This project follows [Semantic Versioning](https://semver.org/). Current release: **v1.0.3**.
+This project follows [Semantic Versioning](https://semver.org/). Current release: **v1.1.0**.
+
+Latest changes (v1.1.0): **+10 tools** completing LINE's token-only API surface — rich-menu lifecycle (per-user link/unlink, set/clear default, aliases, image swap), **Rich Message** (`imagemap`) and **Card Message** (`template`) builders, audience update, webhook set/get, narrowcast progress, and token check. `send_message` gained image / video / pre-built `message_json` shapes; `get_oa_status` now reports chat mode. Four real-time/codegen tools that don't fit an AI-agent workflow (loading indicator, account-link token, LIFF/Login code generators) were removed. See [RELEASE_NOTES_v1.1.0.md](RELEASE_NOTES_v1.1.0.md).
 
 ---
 
 ## Roadmap
 
-- **v1.x** — Outbound operations (current).
-- **v2.x** — Companion inbound package: webhook ingestion, chat 1:1 reply, auto-reply rules, greeting messages, chat tags.
-- **v3.x** — Hosted SaaS for agency multi-tenant use.
+- **v1.x** — Full token-only Messaging API coverage: outbound + rich-menu lifecycle + Rich/Card message builders + audiences + insights + coupons (current).
+- **v2.x** — **LINE Shopping API** integration (under research) — bring shop catalog, products, and commerce flows into the same AI-agent workflow.
+- **Hosted SaaS** — agency multi-tenant use.
 
 ---
 

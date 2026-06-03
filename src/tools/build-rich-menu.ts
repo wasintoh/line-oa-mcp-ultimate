@@ -78,6 +78,7 @@ const InputSchema = z
     image_url: z
       .string()
       .url()
+      .refine((u) => u.startsWith("https://"), "image_url ต้องเป็น HTTPS")
       .describe(
         "Public HTTPS URL of the rich menu image. Must be JPEG or PNG, aspect ratio ≥ 1.45, ≤1MB.",
       ),

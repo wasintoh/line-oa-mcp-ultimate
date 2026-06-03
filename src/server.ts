@@ -4,6 +4,11 @@
  * Builds an McpServer instance and registers every tool / resource / prompt.
  * Kept separate from the transport entry (`index.ts`) so tests and future
  * Streamable HTTP transport can share the same server graph.
+ *
+ * Scope: token-only LINE Messaging API tools that an AI agent (Cowork, Claude
+ * Code, Codex, OpenClaw, Hermes, etc.) actually calls. Real-time / backend /
+ * codegen primitives (loading animation, account-link token, LIFF/Login code
+ * snippets) were intentionally excluded — they don't fit an AI-agent workflow.
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -20,8 +25,6 @@ import { registerBuildRichMenuTool } from "./tools/build-rich-menu.js";
 import { registerDeleteAudienceTool } from "./tools/delete-audience.js";
 import { registerDeleteRichMenuTool } from "./tools/delete-rich-menu.js";
 import { registerDesignFlexTool } from "./tools/design-flex.js";
-import { registerEmitLiffCodeTool } from "./tools/emit-liff-code.js";
-import { registerEmitLoginSnippetTool } from "./tools/emit-login-snippet.js";
 import { registerEstimateSendCostTool } from "./tools/estimate-send-cost.js";
 import { registerFindStickerTool } from "./tools/find-sticker.js";
 import { registerGetCouponStatsTool } from "./tools/get-coupon-stats.js";
@@ -37,9 +40,20 @@ import { registerManageCouponTool } from "./tools/manage-coupon.js";
 import { registerManageLiffAppTool } from "./tools/manage-liff-app.js";
 import { registerRunOnManyOasTool } from "./tools/run-on-many-oas.js";
 import { registerSendMessageTool } from "./tools/send-message.js";
-import { registerShowTypingTool } from "./tools/show-typing.js";
 import { registerTestWebhookTool } from "./tools/test-webhook.js";
 import { registerUseOaTool } from "./tools/use-oa.js";
+
+// v1.1 — API completeness tools (token-only, no webhook)
+import { registerLinkRichMenuTool } from "./tools/link-rich-menu.js";
+import { registerSetDefaultRichMenuTool } from "./tools/set-default-rich-menu.js";
+import { registerManageRichMenuAliasTool } from "./tools/manage-rich-menu-alias.js";
+import { registerUploadRichMenuImageTool } from "./tools/upload-rich-menu-image.js";
+import { registerDesignImagemapTool } from "./tools/design-imagemap.js";
+import { registerDesignCardTool } from "./tools/design-card.js";
+import { registerUpdateAudienceTool } from "./tools/update-audience.js";
+import { registerSetWebhookEndpointTool } from "./tools/set-webhook-endpoint.js";
+import { registerGetNarrowcastProgressTool } from "./tools/get-narrowcast-progress.js";
+import { registerCheckTokenTool } from "./tools/check-token.js";
 
 export function buildServer(): McpServer {
   const server = new McpServer({
@@ -47,11 +61,10 @@ export function buildServer(): McpServer {
     version: SERVER_VERSION,
   });
 
-  // ---- Tools (27 total) ----
+  // ---- Tools (34 total) ----
 
   // A. Messaging
   registerSendMessageTool(server);
-  registerShowTypingTool(server);
   registerFindStickerTool(server);
 
   // B. Rich Menu
@@ -59,31 +72,39 @@ export function buildServer(): McpServer {
   registerListRichMenusTool(server);
   registerDeleteRichMenuTool(server);
   registerAuditUserMenuTool(server);
+  registerLinkRichMenuTool(server);
+  registerSetDefaultRichMenuTool(server);
+  registerManageRichMenuAliasTool(server);
+  registerUploadRichMenuImageTool(server);
 
-  // C. Flex
+  // C. Message design (Flex / Rich Message / Card Message)
   registerDesignFlexTool(server);
+  registerDesignImagemapTool(server);
+  registerDesignCardTool(server);
 
   // D. Audiences
   registerBuildAudienceFromCsvTool(server);
   registerBuildAudienceFromEngagementTool(server);
   registerListAudiencesTool(server);
   registerDeleteAudienceTool(server);
+  registerUpdateAudienceTool(server);
 
   // E. Insights
   registerGetOaReportTool(server);
   registerGetMessageStatsTool(server);
   registerGetOaStatusTool(server);
   registerEstimateSendCostTool(server);
+  registerGetNarrowcastProgressTool(server);
 
   // F. Webhook
   registerTestWebhookTool(server);
+  registerSetWebhookEndpointTool(server);
 
-  // G. LIFF / Login
+  // G. LIFF / Token
   registerManageLiffAppTool(server);
-  registerEmitLiffCodeTool(server);
-  registerEmitLoginSnippetTool(server);
+  registerCheckTokenTool(server);
 
-  // H. Ops
+  // H. Ops / Multi-OA
   registerGetUserProfileTool(server);
   registerListFollowersTool(server);
   registerListOasTool(server);
