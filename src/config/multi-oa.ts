@@ -84,6 +84,31 @@ export function resolveOa(oaIdArg?: string): { id: string; config: OaConfig } {
   return { id, config };
 }
 
+/**
+ * Resolve the MyShop (LINE Shopping) API key for a tool call.
+ * Precedence: the OA's `myshop_api_key` → env `LINE_MYSHOP_API_KEY`.
+ * Throws a Thai-friendly error if neither is set.
+ */
+export function resolveMyShopKey(oaIdArg?: string): { id: string; apiKey: string } {
+  const { id, config } = resolveOa(oaIdArg);
+  const apiKey = config.myshop_api_key ?? process.env.LINE_MYSHOP_API_KEY;
+  if (!apiKey) {
+    throw new Error(TH.missingMyShopKey);
+  }
+  return { id, apiKey };
+}
+
+/**
+ * True if ANY OA has a MyShop key, or the env fallback is set.
+ * Used by the server to decide whether to register the shopping tools at all
+ * (graceful degradation — messaging-only users never see them).
+ */
+export function anyMyShopKeyConfigured(): boolean {
+  if (process.env.LINE_MYSHOP_API_KEY) return true;
+  const cfg = getConfig();
+  return Object.values(cfg.oas).some((oa) => Boolean(oa.myshop_api_key));
+}
+
 /** List all OAs in config (for line_list_oas). */
 export function listOas(): { id: string; config: OaConfig; is_active: boolean }[] {
   const cfg = getConfig();

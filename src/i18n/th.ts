@@ -64,4 +64,23 @@ export const TH = {
   // ---- Draft mode ----
   draftReadyForOaManager: (audienceName?: string) =>
     `📋 เตรียมพร้อมแล้ว! ${audienceName ? `Audience "${audienceName}" — ` : ""}เปิด LINE OA Manager แล้วทำตาม 6 ขั้นด้านล่าง`,
+
+  // ---- v2.0 LINE Shopping (MyShop) ----
+  missingMyShopKey:
+    "🛍️ OA นี้ยังไม่ได้ตั้ง MyShop API key. ไปที่ oaplus.line.biz → Settings → API keys (ต้องเป็น Admin) → Generate แล้วใส่ใน `myshop_api_key` ของ OA (ใน ~/.line-mcp/config.json) หรือ env LINE_MYSHOP_API_KEY",
+
+  myShopUnauthorized:
+    "🔐 MyShop 401 — API key ไม่ถูกต้องหรือถูกเพิกถอน. สร้าง key ใหม่ที่ oaplus.line.biz → Settings → API keys",
+
+  myShopForbidden:
+    "🚫 MyShop 403 — ไม่มีสิทธิ์ทำรายการนี้. ตรวจสอบว่า key มาจากร้านที่ถูกต้อง และร้านเปิด MyShop/LINE Shopping แล้ว",
+
+  myShopNotFound:
+    "🔍 MyShop 404 — ไม่พบรายการที่ระบุ (สินค้า/ออเดอร์/เลขที่). ตรวจสอบ id หรือ order number อีกครั้ง",
+
+  myShopRateLimited:
+    "🚦 MyShop rate limit (429) — เกิน 50 req/วินาที หรือ 1,000 req/นาที. รอสักครู่แล้วลองใหม่",
+
+  confirmRequired: (action: string) =>
+    `⚠️ การ${action}เป็นการกระทำที่กู้คืนไม่ได้ — ตั้งค่า confirm=true เพื่อยืนยัน`,
 } as const;

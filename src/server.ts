@@ -55,6 +55,24 @@ import { registerSetWebhookEndpointTool } from "./tools/set-webhook-endpoint.js"
 import { registerGetNarrowcastProgressTool } from "./tools/get-narrowcast-progress.js";
 import { registerCheckTokenTool } from "./tools/check-token.js";
 
+// v2.0 — LINE Shopping (MyShop Open API). Registered ONLY when a MyShop key is
+// configured (graceful degradation: messaging-only users never see these tools).
+import { anyMyShopKeyConfigured } from "./config/multi-oa.js";
+import { registerListProductsTool } from "./tools/list-products.js";
+import { registerCreateProductTool } from "./tools/create-product.js";
+import { registerUpdateProductTool } from "./tools/update-product.js";
+import { registerDeleteProductTool } from "./tools/delete-product.js";
+import { registerUpdateProductPriceTool } from "./tools/update-product-price.js";
+import { registerSetProductVisibilityTool } from "./tools/set-product-visibility.js";
+import { registerManageProductVariantTool } from "./tools/manage-product-variant.js";
+import { registerManageInventoryTool } from "./tools/manage-inventory.js";
+import { registerListOrdersTool } from "./tools/list-orders.js";
+import { registerGetOrderTool } from "./tools/get-order.js";
+import { registerFulfillOrderTool } from "./tools/fulfill-order.js";
+import { registerCancelOrderTool } from "./tools/cancel-order.js";
+import { registerGetSettlementTool } from "./tools/get-settlement.js";
+import { registerCreateCheckoutLinkTool } from "./tools/create-checkout-link.js";
+
 export function buildServer(): McpServer {
   const server = new McpServer({
     name: SERVER_NAME,
@@ -114,6 +132,30 @@ export function buildServer(): McpServer {
   // I. Coupons
   registerManageCouponTool(server);
   registerGetCouponStatsTool(server);
+
+  // J. LINE Shopping (v2.0 — MyShop Open API)
+  // Gated: only registered when a MyShop API key is present (per-OA or env).
+  // Messaging-only users see none of these and hit no config errors.
+  if (anyMyShopKeyConfigured()) {
+    // Products
+    registerListProductsTool(server);
+    registerCreateProductTool(server);
+    registerUpdateProductTool(server);
+    registerDeleteProductTool(server);
+    registerUpdateProductPriceTool(server);
+    registerSetProductVisibilityTool(server);
+    registerManageProductVariantTool(server);
+    // Inventory
+    registerManageInventoryTool(server);
+    // Orders
+    registerListOrdersTool(server);
+    registerGetOrderTool(server);
+    registerFulfillOrderTool(server);
+    registerCancelOrderTool(server);
+    // Settlement + Checkout
+    registerGetSettlementTool(server);
+    registerCreateCheckoutLinkTool(server);
+  }
 
   // ---- Resources + Prompts ----
   registerResources(server);

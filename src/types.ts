@@ -13,6 +13,13 @@ export interface OaConfig {
   display_name?: string;
   is_premium?: boolean;
   region?: "TH" | "JP" | "TW" | "ID" | "OTHER";
+  /**
+   * v2.0 — LINE Shopping (MyShop Open API) key. OPTIONAL.
+   * When present (or env LINE_MYSHOP_API_KEY is set), the shopping tools are
+   * registered. When absent, the OA works exactly as in v1 (messaging only).
+   * Get it from oaplus.line.biz → Settings → API keys (Admin role).
+   */
+  myshop_api_key?: string;
 }
 
 export interface MultiOaConfig {
@@ -211,4 +218,65 @@ export interface ToolError {
   message_th: string; // user-facing
   message_en?: string; // technical
   suggestion?: string;
+}
+
+// ============================================================================
+// v2.0 — LINE Shopping (MyShop Open API) response types
+// Loose-but-typed: known top-level fields are declared; the rest is passthrough
+// so we never break if LINE adds fields. Verified against Swagger 2026-06-03.
+// ============================================================================
+export interface MyShopProduct {
+  id?: string | number;
+  name?: string;
+  [k: string]: unknown;
+}
+
+export interface MyShopProductList {
+  currentPage: number;
+  data: MyShopProduct[];
+  perPage: number;
+  totalPage: number;
+  totalRow: number;
+}
+
+export interface MyShopCreateProductResult {
+  id: string | number;
+  hasOnlyDefaultVariant?: boolean;
+  isDisplay?: boolean;
+}
+
+export interface MyShopInventoryResult {
+  availableNumber: number;
+  onHandAmount: number;
+  readyToShipAmount: number;
+  reservedAmount: number;
+}
+
+export interface MyShopOrder {
+  orderNo?: string | number;
+  [k: string]: unknown;
+}
+
+export interface MyShopOrderList {
+  currentPage?: number;
+  data: MyShopOrder[];
+  perPage?: number;
+  totalPage?: number;
+  totalRow?: number;
+}
+
+export interface MyShopSettlement {
+  orderNumber?: string;
+  orderIncomeDetail?: Record<string, unknown>;
+  settlementDetail?: Record<string, unknown>;
+  [k: string]: unknown;
+}
+
+export interface MyShopCheckoutResult {
+  checkoutLink: string;
+}
+
+/** One line item for POST /checkout-link (orderItems[]). Shape per Swagger CheckoutLinkItem. */
+export interface CheckoutLinkItem {
+  [k: string]: unknown;
 }

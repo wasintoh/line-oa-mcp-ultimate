@@ -42,3 +42,6 @@ config.local.json
 .cache/
 .parcel-cache/
 *.local
+
+# Cowork project instructions (internal — not for the public repo)
+CLAUDIA-ENGINEER-INSTRUCTOR.md

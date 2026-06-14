@@ -1,7 +1,7 @@
 {
   "name": "line-oa-mcp-ultimate",
-  "version": "1.1.0",
-  "description": "Operate one or many LINE Official Accounts from any AI agent through natural language. Send broadcasts, design Flex messages, build rich menus, manage audiences, run coupon campaigns, pull insights, and switch between multiple OAs (agency-ready) — all without writing code. Works with Claude Cowork, Claude Code, Cursor, Codex, ChatGPT desktop, OpenClaw, Hermes, and any MCP-compatible host.",
+  "version": "2.0.0",
+  "description": "Operate one or many LINE Official Accounts from any AI agent through natural language — messaging and commerce, no code. Messaging: broadcasts, Flex messages, rich menus, audiences, coupons, and insights. LINE Shopping (MyShop, opt-in): manage products, inventory, and orders, print parcel labels, check settlements, and generate checkout links to close sales right in chat. 34 messaging + 14 shopping tools, agency-ready multi-OA. Works with Claude Cowork, Claude Code, Cursor, Codex, ChatGPT desktop, and any MCP-compatible host.",
   "keywords": [
     "mcp",
     "mcp-server",
@@ -17,7 +17,12 @@
     "ai-agent",
     "chatbot",
     "thai",
-    "marketing-automation"
+    "marketing-automation",
+    "line-shopping",
+    "myshop",
+    "ecommerce",
+    "line-commerce",
+    "checkout-link"
   ],
   "homepage": "https://github.com/wasintoh/line-oa-mcp-ultimate#readme",
   "bugs": {

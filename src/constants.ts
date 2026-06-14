@@ -12,7 +12,7 @@ export const LINE_API_DATA_BASE = "https://api-data.line.me"; // for content / a
 
 // ---- Server identity ----
 export const SERVER_NAME = "line-oa-mcp-ultimate";
-export const SERVER_VERSION = "1.1.0";
+export const SERVER_VERSION = "2.0.0";
 
 // ---- Response sizing ----
 export const CHARACTER_LIMIT = 25_000; // truncate responses beyond this size
@@ -86,3 +86,17 @@ export const TEMPLATE_CONFIRM_ACTIONS = 2;
 export const TEMPLATE_CAROUSEL_MAX_COLUMNS = 10;
 export const TEMPLATE_CAROUSEL_MAX_ACTIONS_PER_COLUMN = 3;
 export const TEMPLATE_IMAGE_CAROUSEL_MAX_COLUMNS = 10;
+
+// ============================================================================
+// v2.0 — LINE Shopping (MyShop Open API)
+// Verified against the live Swagger (Redoc 1.0.0) on 2026-06-03.
+// Separate product from the Messaging API: different base host + X-API-KEY auth.
+// ============================================================================
+export const MYSHOP_API_BASE = "https://developers-oaplus.line.biz";
+export const MYSHOP_DEFAULT_PER_PAGE = 25;
+export const MYSHOP_MAX_PER_PAGE = 100;
+export const MYSHOP_INVENTORY_MAX = 100_000; // amount must be 1..100,000
+export const MYSHOP_CHECKOUT_MAX_ITEMS = 15; // orderItems: 1..15
+export const MYSHOP_TRACKING_MAX_LEN = 50; // trackingNumber ≤ 50 chars
+// Published rate limit per API resource (exceeding → 429). Surfaced so agents pace themselves.
+export const MYSHOP_RATE_LIMIT = { per_sec: 50, per_min: 1000 } as const;
