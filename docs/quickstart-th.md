@@ -10,6 +10,7 @@
 2. **Channel Access Token** (ดูวิธีดึงด้านล่าง)
 3. **Claude Cowork** (หรือ Claude Code / Cursor / ChatGPT desktop / client อื่นที่รองรับ MCP)
 4. **Node.js ≥ 20** (Cowork มีให้ในตัว — ไม่ต้องลงเอง)
+5. _(ถ้าจะใช้ **LINE Shopping** — จัดการสินค้า/ออเดอร์)_ **MyShop API key** + ร้านที่เปิด LINE Shopping แล้ว — ดู [ต่อยอด](#ต่อยอด) ด้านล่าง
 
 ---
 
@@ -88,18 +89,48 @@
 
 ---
 
+## (เสริม) เปิด LINE Shopping
+
+ถ้าร้านคุณใช้ **LINE Shopping (MyShop)** อยู่ + อยากให้ AI จัดการสินค้า / สต็อก / ออเดอร์ / ออกใบปะหน้า / สร้างลิงก์จ่ายเงิน — แค่เพิ่ม `LINE_MYSHOP_API_KEY` เข้าไปใน `env` (เอา key จาก **oaplus.line.biz → Settings → API keys**, ต้องเป็น Admin):
+
+```json
+{
+  "mcpServers": {
+    "line": {
+      "command": "npx",
+      "args": ["-y", "line-oa-mcp-ultimate"],
+      "env": {
+        "LINE_CHANNEL_ACCESS_TOKEN": "YOUR_TOKEN",
+        "LINE_MYSHOP_API_KEY": "YOUR_MYSHOP_API_KEY"
+      }
+    }
+  }
+}
+```
+
+บันทึก → **restart Cowork** (`⌘ + Q` เปิดใหม่) → จะมี 14 shopping tools เพิ่มมา ลองสั่ง:
+
+```
+ดูสินค้าทั้งหมด
+มีออเดอร์อะไรบ้างวันนี้ สรุปให้หน่อย
+ลูกค้าอยากได้ variant V9 จำนวน 2 ชิ้น สร้างลิงก์จ่ายเงิน
+```
+
+> ไม่ใส่ key ก็ใช้ได้ปกติ — แค่จะมีเฉพาะ messaging tools (shopping tools จะไม่โผล่) · รูปสินค้าต้องเป็น public URL (ดู [`../README.md`](../README.md) หัวข้อ Image hosting)
+
+---
+
 ## เคล็ดลับการใช้งาน
 
 ### ✅ Best practice
 
-- **ก่อน broadcast ใหญ่** — เริ่มจาก `mode: "dry_run"` เพื่อ validate + estimate cost
+- **ก่อน broadcast ใหญ่ ให้ "ซ้อมส่ง" ก่อน** — บอก AI ว่า _"ลองส่งแบบ dry run ก่อน"_ (`mode: "dry_run"`) = **ยังไม่ส่งจริง** แต่ระบบจะตรวจให้ว่าข้อความถูกต้องไหม + บอกว่าจะส่งถึงกี่คน และใช้ quota กี่ข้อความ ดูให้ชัวร์ก่อนค่อยสั่งส่งจริง — กันยิงผิดกลุ่มหรือเปลือง quota
 - **Schedule ใน LINE OA Manager** ดีกว่า build เอง — LINE delivery reliability สูงกว่า + audit log อยู่ใน OA Manager
 - **Quota Guardian** จะเตือนเองถ้าจะส่งเกิน 95% ของ quota — ใช้ `confirm: true` ถ้ายืนยัน
 - **Quiet hours (22:00–08:00 BKK)** ถ้าจำเป็นต้องส่ง ใช้ `force: true` หรือ `quiet_push: true`
 
 ### ⚠️ ระวัง
 
-- Reply token มีอายุ ~30 วินาที — ถ้า AI ช้าเกินไป tool จะ fallback เป็น push อัตโนมัติ (ใช้ quota +1)
 - Narrowcast ต้องการ audience อย่างน้อย 50 คน — น้อยกว่านั้น LINE จะ reject
 - Insight data มี T-2 lag — ข้อมูลของเมื่อวานอาจยังไม่ครบ 100%
 - Audience ที่สร้างใหม่ต้องรอ ~10 นาที ก่อนใช้ส่งได้
@@ -118,6 +149,7 @@
 
 ## ต่อยอด
 
+- 🛍️ **เปิด LINE Shopping** — ดูหัวข้อ [(เสริม) เปิด LINE Shopping](#เสริม-เปิด-line-shopping) ด้านบน
 - ตั้ง config multi-OA (สำหรับ agency หรือคนมีหลาย OA) — ดู [`multi-oa-setup-th.md`](multi-oa-setup-th.md)
 - รัน MCP แบบ HTTP / self-hosted — ดู [`http-transport.md`](http-transport.md)
 - รายงาน issue / feature request ที่ [GitHub](https://github.com/wasintoh/line-oa-mcp-ultimate/issues)

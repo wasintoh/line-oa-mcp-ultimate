@@ -1,8 +1,12 @@
 # line-oa-mcp-ultimate — v2 PRD (API Completeness)
 
-> **Status:** APPROVED — building
+> ⚠️ **หมายเหตุ (อัปเดต 2026-06-03):** เอกสารนี้คือแผนเดิม = **"API Completeness Pack"** ซึ่งจริงๆ **ship ออกเป็น v1.1.0** ไปเรียบร้อย (เติม Messaging API endpoints ที่ขาด) — ไม่ใช่ v2.0.0 ตามที่เขียนไว้เดิม
+> **v2.0.0 ปัจจุบันคือ "LINE Shopping (MyShop Open API)"** — ดูแผนจริงที่ [`v2-shopping/PRD.md`](v2-shopping/PRD.md) + [`v2-shopping/TECH-SPEC.md`](v2-shopping/TECH-SPEC.md)
+> เก็บไฟล์นี้ไว้เป็น **ประวัติการตัดสินใจ (decision log)** ของ API Completeness Pack เท่านั้น
+
+> **Status:** ✅ SHIPPED as **v1.1.0** (historical)
 > **Author:** คลอเดียจัง (พี่โต · Innovation Vantage · ForgeAI)
-> **Target version:** v2.0.0
+> **Target version:** ~~v2.0.0~~ → shipped as v1.1.0
 > **Methodology:** mcp-builder (Research → Implement → Review/Test → Evaluations)
 > **Date:** 2026-06-02
 

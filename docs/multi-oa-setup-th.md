@@ -1,34 +1,46 @@
-# ตั้งค่า Multi-OA (สำหรับ agency หรือคนมีหลาย OA)
+# ตั้งค่าหลาย OA (Multi-OA)
 
-> ถ้ามี OA ตัวเดียว — ใช้ env var `LINE_CHANNEL_ACCESS_TOKEN` ก็พอ (ดู [`quickstart-th.md`](quickstart-th.md)) ไฟล์นี้สำหรับคนที่มีหลาย OA และอยากให้ AI สลับใช้ได้ง่ายๆ ผ่าน config ไฟล์เดียว
-
----
-
-## ภาพรวม
-
-Multi-OA ทำงานด้วย **ไฟล์ config JSON ไฟล์เดียว** ที่เก็บ token ของทุก OA ไว้ แล้วชี้ให้ MCP server อ่านไฟล์นั้น จากนั้นจะสั่ง AI สลับ OA หรือระบุ OA ราย call ก็ได้
-
-> 💡 ติดตั้งผ่าน `npx` เหมือน single-OA ทุกอย่าง — Multi-OA **ไม่ต้อง clone repo หรือ build เอง** ต่างกันแค่ "ใส่ token หลายตัวในไฟล์ config แทนที่จะใส่ token เดียวใน env var"
+> มี OA ตัวเดียว? ใช้ env `LINE_CHANNEL_ACCESS_TOKEN` พอ — ดู [`quickstart-th.md`](quickstart-th.md)
+> ไฟล์นี้สำหรับคนที่มีหลาย OA (เช่น agency) อยากสลับใช้ได้ง่ายผ่าน config ไฟล์เดียว
 
 ---
 
-## เลือก 1 จาก 2 ทาง
+## วิธีตั้งค่า
 
-### ทาง A — วางที่ `~/.line-mcp/config.json` (มาตรฐาน ⭐ แนะนำ)
-
-server จะ **auto-discover** ไฟล์นี้เอง ไม่ต้องตั้ง env var เพิ่ม
+เก็บ token ของทุก OA ไว้ใน JSON ไฟล์เดียวที่ `~/.line-mcp/config.json` — server หาเจอเองอัตโนมัติ ไม่ต้องตั้ง env เพิ่ม
 
 ```bash
-# 1. สร้าง folder (ครั้งเดียว)
 mkdir -p ~/.line-mcp
-
-# 2. สร้าง + เปิดไฟล์ config (ใช้ editor ตัวไหนก็ได้)
-nano ~/.line-mcp/config.json     # หรือ: code ~/.line-mcp/config.json
+nano ~/.line-mcp/config.json      # หรือ: code ~/.line-mcp/config.json
 ```
 
-ใส่เนื้อหาตาม [รูปแบบ config](#รูปแบบ-config) ด้านล่าง แล้วบันทึก
+ใส่เนื้อหาแบบนี้ (ก๊อปจาก [`config.example.json`](../config.example.json) ใน repo ได้เลย):
 
-**Cowork config (สั้นสุด — ไม่ต้องใส่ env var เลย):**
+```json
+{
+  "default_oa": "main",
+  "oas": {
+    "main": {
+      "channel_access_token": "TOKEN_ของ_OA_หลัก",
+      "display_name": "My Main OA",
+      "region": "TH",
+      "myshop_api_key": "MYSHOP_KEY_ถ้าจะใช้_LINE_Shopping"
+    },
+    "shop_2": {
+      "channel_access_token": "TOKEN_ของ_OA_ที่สอง",
+      "display_name": "Second OA"
+    }
+  }
+}
+```
+
+> `id` ของแต่ละ OA (เช่น `main`, `shop_2`) ตั้งชื่อเองได้ — ใช้อ้างอิงตอนสลับด้วย `line_use_oa`
+
+---
+
+## ต่อเข้า Cowork
+
+**Cowork → Settings ⚙️ → Developer → Local MCP servers → Edit Config** แล้วใส่ (ไม่ต้องมี env เลย):
 
 ```json
 {
@@ -41,126 +53,40 @@ nano ~/.line-mcp/config.json     # หรือ: code ~/.line-mcp/config.json
 }
 ```
 
-Restart Cowork (`⌘ + Q` แล้วเปิดใหม่) → server อ่าน `~/.line-mcp/config.json` อัตโนมัติ
+บันทึก แล้ว **restart Cowork** (`⌘ + Q` เปิดใหม่) — server อ่าน `~/.line-mcp/config.json` ให้เอง
+
+> 💡 อยากเก็บไฟล์ config ไว้ที่อื่น (เช่นใน folder โปรเจค)? เพิ่ม `"env": { "LINE_MCP_CONFIG": "/path/เต็ม/ของไฟล์.json" }` ชี้ path เอง
 
 ---
 
-### ทาง B — วางไฟล์ที่ไหนก็ได้ แล้วชี้ด้วย `LINE_MCP_CONFIG`
+## Field ในไฟล์ config
 
-เหมาะถ้าอยากเก็บ config ไว้ใน folder โปรเจคของตัวเอง (เช่น vault ที่ sync/backup อยู่แล้ว)
+**บังคับ:**
+- `default_oa` — id ของ OA ที่เป็น default
+- `oas[id].channel_access_token` — token ของ OA นั้น (จาก LINE Developers Console)
 
-**Cowork config:**
-
-```json
-{
-  "mcpServers": {
-    "line": {
-      "command": "npx",
-      "args": ["-y", "line-oa-mcp-ultimate"],
-      "env": {
-        "LINE_MCP_CONFIG": "/absolute/path/to/your/config.json"
-      }
-    }
-  }
-}
-```
-
-> แก้ `/absolute/path/to/your/config.json` เป็น path เต็มจริงของไฟล์ในเครื่องคุณ เช่น `/Users/yourname/line-config/oas.json`
-
-Restart Cowork → ใช้ได้เลย
+**ไม่บังคับ:**
+- `display_name` — ชื่อโชว์ใน `line_list_oas`
+- `region` — `TH` / `JP` / `TW` / `ID` / `OTHER`
+- `is_premium` — flag สำหรับ feature ที่ต้องใช้ Premium OA
+- `myshop_api_key` — **(v2.0)** ใส่เพื่อเปิด LINE Shopping tools ให้ OA นั้น (จาก oaplus.line.biz → Settings → API keys, Admin role) ไม่ใส่ = messaging อย่างเดียว
 
 ---
 
-## รูปแบบ config
-
-วางเป็น JSON ปกติ (ห้ามมี comment `//` ในไฟล์จริง — ที่อธิบายไว้ในตารางด้านล่างแทน):
-
-```json
-{
-  "default_oa": "main",
-  "oas": {
-    "main": {
-      "channel_access_token": "TOKEN_ของ_OA_หลัก",
-      "display_name": "บริษัทหลัก",
-      "region": "TH",
-      "is_premium": false
-    },
-    "client_a": {
-      "channel_access_token": "TOKEN_ของ_CLIENT_A",
-      "display_name": "Client A — Bangkok Cafe",
-      "region": "TH"
-    },
-    "client_b": {
-      "channel_access_token": "TOKEN_ของ_CLIENT_B",
-      "display_name": "Client B"
-    }
-  }
-}
-```
-
-> 📄 ดูไฟล์ตัวอย่างพร้อมใช้ที่ [`config.example.json`](../config.example.json) ใน repo — ก๊อปไปเป็นจุดเริ่มต้นได้เลย
-
-### Field ที่บังคับ
-
-- `default_oa` (string) — ID ของ OA ที่จะเป็น default
-- `oas[id].channel_access_token` (string) — token ของ OA นั้น (จาก LINE Developers Console)
-
-### Field ที่ optional
-
-- `channel_secret` — ใช้กับ `line_test_webhook` + webhook signature verification
-- `display_name` — โชว์ใน `line_list_oas` ให้อ่านสบาย
-- `region` — `TH` / `JP` / `TW` / `ID` / `OTHER` (บาง API gate by region เช่น audience, follower IDs)
-- `is_premium` — flag สำหรับ feature ที่ต้องใช้ premium OA
-
-> `id` ของแต่ละ OA (เช่น `main`, `client_a`) เป็นชื่อที่คุณตั้งเอง — ใช้อ้างอิงตอนสลับด้วย `line_use_oa`
-
----
-
-## ใช้ Multi-OA ใน Cowork
-
-หลัง setup เสร็จ — ลองสั่ง Cowork:
+## สั่งงานหลาย OA ใน Cowork
 
 ```
-"ดู OA ทั้งหมด"
-→ Cowork เรียก line_list_oas → แสดงทุก OA + ตัวที่ active
-
-"สลับไป client_a"
-→ line_use_oa({ oa_id: "client_a" })
-→ ตอนนี้ active OA = client_a
-
-"ดูสถานะ"
-→ line_get_oa_status — ใช้ client_a อัตโนมัติ
-
-"ส่งข้อความให้ user X ใน OA client_b"
-→ line_send_message({ target: { user_id: "..." }, message: { text: "..." }, oa: "client_b" })
-→ ใช้ client_b แค่ครั้งนี้ ไม่กระทบ active OA
-
-"ส่ง broadcast ปีใหม่ไปทุก OA"
-→ line_run_on_many_oas({ tool: "...", oa_ids: "all" })
-→ agency power feature — รัน parallel ทุก OA (เฉพาะ tool แบบ read-only)
+"ดู OA ทั้งหมด"              → line_list_oas (แสดงทุก OA + ตัวที่ active)
+"สลับไป shop_2"             → line_use_oa({ oa_id: "shop_2" })
+"ส่งข้อความ ... ใน OA main"   → ใส่ param oa: "main" เฉพาะครั้งนั้น
+"ส่ง broadcast ไปทุก OA"     → line_run_on_many_oas (รัน read-only ทุก OA พร้อมกัน)
 ```
 
 ---
 
 ## ⚠️ Security
 
-- **ทาง A** (`~/.line-mcp/config.json`): อยู่ใน home directory นอก repo — ไม่เสี่ยงติด git
-- **ทาง B** (custom path): ถ้าวางไฟล์ไว้ในโปรเจคที่เป็น git repo **ต้องเพิ่ม path นั้นใน `.gitignore`** กัน token หลุดขึ้น git
+- `~/.line-mcp/config.json` อยู่ใน home directory นอก repo — ไม่เสี่ยงติด git (ถ้าเก็บไว้ที่อื่นในโปรเจค ต้องเพิ่มใน `.gitignore`)
 - **ห้ามเปิดไฟล์ config ตอน share screen / demo** — ในนั้นมี token จริงของทุก OA
-- ทุก token ดึง/เพิกถอนได้ที่ LINE Developers Console — ถ้าสงสัยว่าหลุด ให้ **re-issue ทันที** (ตัวเก่าจะใช้ไม่ได้ทันที)
-
----
-
-## ลำดับที่ server ค้นหา config (resolution order)
-
-ตัวบนชนะ:
-
-1. `LINE_MCP_CONFIG` (path ที่ชี้เอง — ทาง B)
-2. `~/.line-mcp/config.json` (auto-discover — ทาง A)
-3. `LINE_CHANNEL_ACCESS_TOKEN` env var (fallback แบบ single-OA)
-
----
-
-## เปลี่ยน config ต้อง restart ไหม?
-
-ต้อง — แก้ไฟล์ config แล้วต้อง **restart Cowork** (`⌘ + Q` แล้วเปิดใหม่) ทุกครั้ง เพื่อให้ server โหลดค่าใหม่
+- token re-issue ได้ที่ LINE Developers Console — ถ้าสงสัยว่าหลุด re-issue ทันที (ตัวเก่าใช้ไม่ได้ทันที)
+- เปลี่ยน config แล้วต้อง **restart Cowork** (`⌘ + Q`) ทุกครั้ง

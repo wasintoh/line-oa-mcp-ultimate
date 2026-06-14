@@ -11,6 +11,8 @@
 
 [Quick Start](#quick-start) · [What you can do](#what-you-can-do) · [Configuration](#configuration) · [Documentation](#documentation)
 
+**🇹🇭 คู่มือภาษาไทย:** [เริ่มต้น 5 นาที](docs/quickstart-th.md) · [Messaging — 34 tools](docs/messaging-guide-th.md) · [LINE Shopping — 14 tools](docs/myshop-guide-th.md)
+
 </div>
 
 ---
@@ -56,7 +58,7 @@ The MCP server takes care of LINE Messaging API calls, pre-flight validation, qu
 
 ## What you can do
 
-**34 tools + 4 resources + 7 guided prompts**, grouped by what you actually want to do:
+**34 messaging tools + 14 LINE Shopping tools (v2.0, opt-in) + 4 resources + 7 guided prompts**, grouped by what you actually want to do:
 
 ### 📨 Send messages (2 tools)
 One universal `send_message` covers every LINE transport (reply / push / multicast / narrowcast / broadcast). Three modes: `send_now`, `draft` (for scheduling via LINE OA Manager UI), and `dry_run` (validate + estimate cost without sending). Message shapes: text, Flex (template or raw JSON), sticker, **image**, **video**, **native LINE coupon** (`{ coupon_id }`), and a `message_json` passthrough for pre-built Rich/Card messages. Plus Thai-friendly sticker search.
@@ -84,6 +86,17 @@ User profile lookup, follower listing, multi-OA listing and switching, and `run_
 
 ### 💻 LIFF & Token (2 tools)
 Manage LIFF app lifecycle (create / update / delete / list) and verify your channel access token's validity, expiry, and scope.
+
+### 🛍️ LINE Shopping (14 tools — v2.0, opt-in)
+
+Turn your agent into a storefront operator. These register **only when a MyShop API key is configured** (see [Configuration](#configuration)) — messaging-only users never see them. Powered by the **MyShop Open API** (`X-API-KEY`, no webhook/server required).
+
+- **Products (7):** list, create, update, delete, change price, show/hide, and manage variants — e.g. *"เพิ่มสินค้าเสื้อยืด 299 บาท สต็อก 50"*, *"ลดราคาคอลเลกชันนี้ 15%"*.
+- **Inventory (1):** set / increase / decrease stock — *"เติมสต็อก V9 อีก 50"*.
+- **Orders (4):** list/search (with **polling** for new orders via a scheduled task), get detail, **fulfill** (mark shipped + tracking, mark COD paid, **print parcel label**), and cancel — *"ออกใบปะหน้าให้ออเดอร์ที่จ่ายแล้ววันนี้"*.
+- **Settlement + Checkout (2):** see real income after fees, and **create a checkout link to close the sale in chat** — *"ลูกค้าอยากได้ 2 ชิ้น สร้างลิงก์จ่ายเงิน"*.
+
+> 📘 **Full Thai guide:** [docs/myshop-guide-th.md](docs/myshop-guide-th.md) — get the API key, every tool explained, real workflows, safety rules, and troubleshooting.
 
 **Resources** — auto-refreshing OA snapshot, Flex template catalog, sticker catalog with mood-keyword index, and a Thai festival calendar with marketing promo patterns.
 
@@ -160,6 +173,27 @@ or in Thai:
 
 You should see a health card with friend count, monthly quota, webhook status, and the default rich menu. That's it — you're now operating your LINE OA from your AI agent.
 
+### 🛍️ Want LINE Shopping too? (optional)
+
+Add `LINE_MYSHOP_API_KEY` to the same `env` block (get it from `oaplus.line.biz` → **Settings → API keys**, Admin role). The full config looks like this:
+
+```json
+{
+  "mcpServers": {
+    "line": {
+      "command": "npx",
+      "args": ["-y", "line-oa-mcp-ultimate"],
+      "env": {
+        "LINE_CHANNEL_ACCESS_TOKEN": "YOUR_TOKEN_HERE",
+        "LINE_MYSHOP_API_KEY": "YOUR_MYSHOP_API_KEY_HERE"
+      }
+    }
+  }
+}
+```
+
+Restart your host — that unlocks **14 shopping tools** (products, inventory, orders, parcel labels, settlements, checkout links). Without the key, the server stays messaging-only. See [LINE Shopping](#-line-shopping-14-tools--v20-opt-in), the **[full Thai MyShop guide](docs/myshop-guide-th.md)**, and [Image hosting](#️-image-hosting).
+
 ---
 
 ## Configuration
@@ -188,7 +222,8 @@ Fill in one entry per OA:
     "main": {
       "channel_access_token": "TOKEN_1",
       "display_name": "Main OA",
-      "region": "TH"
+      "region": "TH",
+      "myshop_api_key": "MYSHOP_KEY_1"
     },
     "client_a": {
       "channel_access_token": "TOKEN_2",
@@ -197,6 +232,8 @@ Fill in one entry per OA:
   }
 }
 ```
+
+> 🛍️ **LINE Shopping (v2.0):** add `"myshop_api_key"` to any OA to enable the 14 shopping tools for it (get it from `oaplus.line.biz` → Settings → API keys, Admin role). In single-OA mode, set the env var `LINE_MYSHOP_API_KEY` instead. OAs without a key simply keep the messaging tools — the shopping tools never appear and never error.
 
 Then **drop the `LINE_CHANNEL_ACCESS_TOKEN` env var** from your MCP config — the server discovers `~/.line-mcp/config.json` automatically.
 
@@ -223,12 +260,23 @@ For agencies running a shared remote instance, the server also supports Streamab
 
 ---
 
+## 🖼️ Image hosting
+
+Every tool that uses an image — broadcast image, rich menu, card, imagemap, flex, **and LINE Shopping products (v2.0)** — needs a **public, direct HTTPS URL** to a JPEG/PNG. LINE fetches the image from that URL, so it must be directly accessible (not a preview page). MyShop has no binary upload endpoint, so host the image first and pass its URL.
+
+- ✅ **Recommended:** Cloudflare R2, AWS S3 (public bucket), `raw.githubusercontent.com`, Cloudinary, ImageKit — stable, direct URLs.
+- ⚠️ **Avoid:** Google Drive / Dropbox share links — they return an HTML preview page, not a direct image, so LINE can't read them reliably.
+
 ## Documentation
 
 | Doc | What's in it |
 |---|---|
 | [docs/quickstart-th.md](docs/quickstart-th.md) | Thai-language quick start (5-minute walkthrough) |
+| [docs/messaging-guide-th.md](docs/messaging-guide-th.md) | 📨 **Messaging full guide — Thai.** All 34 tools explained, transports & send modes, real workflows, safety limits, and troubleshooting |
+| [docs/myshop-guide-th.md](docs/myshop-guide-th.md) | 🛍️ **LINE Shopping (MyShop) full guide — Thai.** Get the API key, all 14 tools explained, real end-to-end workflows, safety rules, and troubleshooting |
+| [docs/clients-setup-th.md](docs/clients-setup-th.md) | Per-host MCP setup — Cowork / Claude Desktop / Cursor / Codex (Thai) |
 | [docs/multi-oa-setup-th.md](docs/multi-oa-setup-th.md) | Multi-OA configuration guide (Thai) |
+| [docs/cowork-local-test-th.md](docs/cowork-local-test-th.md) | Test a local build in Claude Cowork before publishing (Thai) |
 | [docs/http-transport.md](docs/http-transport.md) | Streamable HTTP transport for self-hosted / remote use |
 | [examples/](examples/) | Runnable examples |
 
@@ -236,17 +284,20 @@ For agencies running a shared remote instance, the server also supports Streamab
 
 ## Versioning
 
-This project follows [Semantic Versioning](https://semver.org/). Current release: **v1.1.0**.
+This project follows [Semantic Versioning](https://semver.org/). Current release: **v2.0.0**.
 
-Latest changes (v1.1.0): **+10 tools** completing LINE's token-only API surface — rich-menu lifecycle (per-user link/unlink, set/clear default, aliases, image swap), **Rich Message** (`imagemap`) and **Card Message** (`template`) builders, audience update, webhook set/get, narrowcast progress, and token check. `send_message` gained image / video / pre-built `message_json` shapes; `get_oa_status` now reports chat mode. Four real-time/codegen tools that don't fit an AI-agent workflow (loading indicator, account-link token, LIFF/Login code generators) were removed. See [RELEASE_NOTES_v1.1.0.md](RELEASE_NOTES_v1.1.0.md).
+Latest changes (v2.0.0): **+14 LINE Shopping tools** via the MyShop Open API — products, inventory, orders (incl. parcel labels), settlements, and checkout links. API-key only, no webhook/server, fully **opt-in** (registers only when a MyShop key is set) and **non-breaking** on the 34 messaging tools. See [RELEASE_NOTES_v2.0.0.md](RELEASE_NOTES_v2.0.0.md).
+
+Previously (v1.1.0): +10 tools completing LINE's token-only Messaging API surface (rich-menu lifecycle, Rich/Card message builders, audience update, webhook set/get, narrowcast progress, token check). See [RELEASE_NOTES_v1.1.0.md](RELEASE_NOTES_v1.1.0.md).
 
 ---
 
 ## Roadmap
 
-- **v1.x** — Full token-only Messaging API coverage: outbound + rich-menu lifecycle + Rich/Card message builders + audiences + insights + coupons (current).
-- **v2.x** — **LINE Shopping API** integration (under research) — bring shop catalog, products, and commerce flows into the same AI-agent workflow.
-- **Hosted SaaS** — agency multi-tenant use.
+- **v1.x** — Full token-only Messaging API coverage: outbound + rich-menu lifecycle + Rich/Card message builders + audiences + insights + coupons.
+- **v2.0** — ✅ **LINE Shopping (MyShop Open API)** shipped — products, inventory, orders, parcel labels, settlements, and checkout links (API-key only, no webhook). See [RELEASE_NOTES_v2.0.0.md](RELEASE_NOTES_v2.0.0.md).
+
+Future direction is guided by real-world usage and community feedback.
 
 ---
 
