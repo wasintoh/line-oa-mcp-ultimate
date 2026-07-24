@@ -41,29 +41,9 @@ export function registerGetCouponStatsTool(server: McpServer): void {
     "line_get_coupon_stats",
     {
       title: "Get LINE coupon redemption stats",
-      description: `Read available stats for a LINE coupon. We combine multiple signals because LINE's Coupon API does not (yet) expose a dedicated redemption-events endpoint:
+      description: `Read available stats for a LINE coupon. LINE has no dedicated redemption endpoint, so this combines signals: raw coupon detail (some accounts include usage inline) plus, if you pass click_audience_id, the click-audience size as a clickthrough proxy. coupon_id comes from line_manage_coupon. Caveat (surfaced in notes): click-audience size approximates clickthroughs, NOT actual redemptions — for real counts build the coupon Flex with a postback action and listen via webhook.
 
-  1. Raw coupon detail (LINE GET /v2/bot/coupon/{id}) — some accounts include usage fields inline.
-  2. Click-audience size (if you pass click_audience_id) — proxies "users who clicked through".
-
-Args:
-  - coupon_id: ID of the coupon (from line_manage_coupon mode='list' or mode='create').
-  - click_audience_id: optional numeric audience id to enrich the report.
-  - oa: optional OA id.
-  - response_format: 'markdown' (default) | 'json'.
-
-Returns (structured):
-  {
-    coupon_id,
-    raw: {...whatever LINE returned about the coupon...},
-    click_audience?: { id, name, audience_count, status },
-    estimated_redemptions?: number,
-    notes: string[]            // explains data sources clearly
-  }
-
-Notes:
-  - For an accurate redemption count, build your coupon Flex with a postback action and listen for postback events via a webhook server (V2 webhook-server companion).
-  - Click audience size approximates "clickthroughs", not actual redemptions — surface this caveat to the user.`,
+Returns { coupon_id, raw, click_audience?, estimated_redemptions?, notes[] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

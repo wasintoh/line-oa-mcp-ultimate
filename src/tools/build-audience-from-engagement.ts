@@ -45,28 +45,9 @@ export function registerBuildAudienceFromEngagementTool(server: McpServer): void
     "line_build_audience_from_engagement",
     {
       title: "Build retargeting audience from prior engagement",
-      description: `Create a LINE audience from people who *clicked* or *opened* a previous broadcast / narrowcast. The killer "retarget without a CRM" tool.
+      description: `Create a LINE audience from people who clicked or opened a previous broadcast/narrowcast — retarget without a CRM. source_request_id is the request_id returned by a prior line_send_message; type 'clicks' (default, optional click_url filter) or 'opens'. The source message must be ≥24h old before the audience is reliable, needs ~50+ users to be usable in narrowcast, and is region-gated to JP/TW/TH (+premium). Feed the resulting audience back into line_send_message target.audience.
 
-Args:
-  - name: New audience name.
-  - source_request_id: request_id from a previous line_send_message call (saved in its return value).
-  - type: 'clicks' (default) or 'opens'.
-  - click_url: optional — limit to a specific clicked URL (for 'clicks' only).
-  - oa: optional OA id.
-
-Returns:
-  { audience_group_id, name, type }
-
-Notes:
-  - LINE requires the source message to be ≥24 hours old before the engagement audience is reliable.
-  - Minimum ~50 users for the audience to be usable in narrowcast.
-  - Region-gated to JP / TW / TH (+ premium).
-
-Example workflow:
-  1. line_send_message(..., target: narrowcast) → save request_id
-  2. Wait 24h
-  3. line_build_audience_from_engagement({ source_request_id, type: 'clicks' })
-  4. line_send_message(..., target: { audience: 'new-engagement-audience' })`,
+Returns { audience_group_id, name, type }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,

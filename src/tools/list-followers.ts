@@ -33,24 +33,9 @@ export function registerListFollowersTool(server: McpServer): void {
     "line_list_followers",
     {
       title: "List LINE OA followers",
-      description: `Page through every user that has added the OA as a friend.
+      description: `Page through every user that has added the OA as a friend. Region-gated: only TH/JP/TW OAs on premium tier — others get LINE 403. page_size 1-1000 (default 300); continuation_token for cursor pagination. For very large OAs (50k+), prefer an engagement audience via line_build_audience_from_engagement over pulling all IDs.
 
-⚠️ Region-gated: only TH / JP / TW OAs with premium tier can use this endpoint. Other OAs will get LINE 403.
-
-Args:
-  - page_size: 1-1000 (default 300).
-  - continuation_token: token from previous call (cursor pagination).
-  - oa: optional OA id.
-
-Returns:
-  {
-    user_ids: string[],
-    count: number,
-    has_more: boolean,
-    next_continuation_token?: string
-  }
-
-For very large OAs (50k+), prefer creating an engagement audience via line_build_audience_from_engagement rather than pulling all IDs.`,
+Returns { user_ids[], count, has_more, next_continuation_token? }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

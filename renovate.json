@@ -1,0 +1,19 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Asia/Bangkok",
+  "schedule": ["before 9am on monday"],
+  "separateMajorMinor": true,
+  "packageRules": [
+    {
+      "description": "One weekly PR for all minor + patch updates; majors stay separate",
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "all non-major dependencies"
+    }
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 9am on the first day of the month"]
+  },
+  "prConcurrentLimit": 3
+}

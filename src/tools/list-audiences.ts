@@ -43,7 +43,7 @@ const InputSchema = z
   })
   .strict();
 
-type Input = z.infer<typeof InputSchema>;
+type _Input = z.infer<typeof InputSchema>; // kept for doc purposes
 
 interface AudienceItem {
   audience_group_id: number;
@@ -59,32 +59,9 @@ export function registerListAudiencesTool(server: McpServer): void {
     "line_list_audiences",
     {
       title: "List LINE Audiences",
-      description: `List audience groups on the OA. Audiences created via LINE OA Manager UI (e.g. chat-tag audiences, friend-path audiences, web-traffic audiences) also appear here — even though those types cannot be CREATED via Messaging API.
+      description: `List audience groups on the OA — including ones created in LINE OA Manager UI (chat-tag, friend-path, web-traffic) that CANNOT be created via Messaging API. status: READY (usable in narrowcast now) | IN_PROGRESS (indexing, wait ~10 min) | FAILED | EXPIRED (both need recreate). Filter with status_filter (default 'all') and name_contains (case-insensitive); paginate with limit/page (default 20).
 
-Status meanings:
-  - READY: usable in narrowcast immediately
-  - IN_PROGRESS: still indexing — wait ~10 minutes
-  - FAILED: creation failed; recreate
-  - EXPIRED: aged out; recreate
-
-Args:
-  - status_filter: 'all' (default) | 'READY' | 'IN_PROGRESS' | 'FAILED' | 'EXPIRED'.
-  - name_contains: optional substring filter (case-insensitive).
-  - limit, page: pagination (default 20/page).
-  - oa: optional OA id.
-
-Returns:
-  {
-    total: number,
-    count: number,
-    page: number,
-    audiences: [{ audience_group_id, name, status, audience_count?, created, type? }],
-    has_more: boolean
-  }
-
-Examples:
-  - "ดู audience ที่พร้อมส่ง" → { status_filter: "READY" }
-  - "หา audience ชื่อ vip" → { name_contains: "vip" }`,
+Returns { total, count, page, audiences:[{ audience_group_id, name, status, audience_count?, created, type? }], has_more }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

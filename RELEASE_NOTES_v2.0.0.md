@@ -1,3 +1,5 @@
+> ⚠️ Superseded — release history now lives in [CHANGELOG.md](./CHANGELOG.md).
+
 # Release Notes — v2.0.0 "Shopping"
 
 **LINE OA MCP Ultimate v2.0** brings **LINE Shopping (MyShop Open API)** into the same AI-agent workflow. v1 let your agent *talk to* customers; v2 lets it *sell to and manage* them — products, stock, orders, parcel labels, settlements, and payment links — all in natural language.

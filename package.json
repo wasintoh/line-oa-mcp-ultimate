@@ -1,7 +1,7 @@
 {
   "name": "line-oa-mcp-ultimate",
-  "version": "2.0.0",
-  "description": "Operate one or many LINE Official Accounts from any AI agent through natural language — messaging and commerce, no code. Messaging: broadcasts, Flex messages, rich menus, audiences, coupons, and insights. LINE Shopping (MyShop, opt-in): manage products, inventory, and orders, print parcel labels, check settlements, and generate checkout links to close sales right in chat. 34 messaging + 14 shopping tools, agency-ready multi-OA. Works with Claude Cowork, Claude Code, Cursor, Codex, ChatGPT desktop, and any MCP-compatible host.",
+  "version": "2.1.0",
+  "description": "Operate one or many LINE Official Accounts from any AI agent through natural language — messaging and commerce, no code. Messaging: broadcasts, Flex messages, rich menus, audiences, coupons, and insights. New in 2.1 — Rich Menu Studio: generate professionally designed Thai rich-menu images (LINE Seed / Prompt fonts) and deploy with auto-derived tap areas, preview-before-deploy, no designer and no Chromium. LINE Shopping (MyShop, opt-in): manage products, inventory, and orders, print parcel labels, check settlements, and generate checkout links to close sales right in chat. 35 messaging + 14 shopping tools, agency-ready multi-OA. Works with Claude Cowork, Claude Code, Cursor, Codex, ChatGPT desktop, and any MCP-compatible host.",
   "keywords": [
     "mcp",
     "mcp-server",
@@ -50,6 +50,7 @@
   },
   "files": [
     "dist",
+    "assets",
     "README.md",
     "LICENSE",
     "config.example.json"
@@ -64,7 +65,9 @@
     "inspect": "npx @modelcontextprotocol/inspector node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint src --ext .ts",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src tests",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "prepublishOnly": "npm run clean && npm run build"
   },
@@ -72,18 +75,21 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@line/bot-sdk": "^9.5.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "@resvg/resvg-js": "^2.6.2",
+    "satori": "^0.29.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "eslint": "^9.17.0",
     "prettier": "^3.4.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
+    "typescript-eslint": "^8.65.0",
     "vitest": "^2.1.8"
   }
 }

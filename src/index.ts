@@ -9,20 +9,21 @@
  *     ChatGPT desktop, and Claude Desktop's classic MCP config.
  *
  *   - http: Streamable HTTP transport used by Claude Cowork's "Add custom
- *     connector" UI (which accepts a remote MCP URL).
+ *     connector" UI (which accepts a remote MCP URL). The HTTP server itself
+ *     lives in `src/http.ts` (auth, origin check, health, shutdown) — this
+ *     file only parses env and hands off.
  *
  * IMPORTANT for stdio: NEVER write to stdout (it carries the MCP protocol).
  * All diagnostics go through console.error.
  */
 
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
 import { SERVER_NAME, SERVER_VERSION } from "./constants.js";
 import { loadConfig } from "./config/multi-oa.js";
+import { redactSecrets } from "./line/redact.js";
 import { buildServer } from "./server.js";
+import { startHttpServer } from "./http.js";
 
 type Transport = "stdio" | "http";
 
@@ -42,11 +43,13 @@ async function main(): Promise<void> {
     const cfg = loadConfig();
     const oaCount = Object.keys(cfg.oas).length;
     console.error(
-      `[${SERVER_NAME} v${SERVER_VERSION}] Loaded ${oaCount} OA(s). Default: "${cfg.default_oa}".`,
+      redactSecrets(
+        `[${SERVER_NAME} v${SERVER_VERSION}] Loaded ${oaCount} OA(s). Default: "${cfg.default_oa}".`,
+      ),
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`[${SERVER_NAME}] FATAL: ${message}`);
+    console.error(redactSecrets(`[${SERVER_NAME}] FATAL: ${message}`));
     process.exit(1);
   }
 
@@ -61,100 +64,19 @@ async function main(): Promise<void> {
   }
 
   // ---- HTTP mode (Streamable HTTP — stateless per-request) ----
-  const host = process.env.MCP_HTTP_HOST ?? "127.0.0.1";
-  const port = parseInt(process.env.MCP_HTTP_PORT ?? "3000", 10);
-  const path = process.env.MCP_HTTP_PATH ?? "/mcp";
-
-  const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-    // DNS-rebinding protection — only accept connections to our host header.
-    const originHeader = req.headers.origin;
-    if (originHeader) {
-      try {
-        const originUrl = new URL(originHeader);
-        const allowedHosts = new Set(["127.0.0.1", "localhost", host]);
-        if (!allowedHosts.has(originUrl.hostname)) {
-          res.writeHead(403, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Origin not allowed" }));
-          return;
-        }
-      } catch {
-        /* malformed Origin — fall through; transport will refuse */
-      }
-    }
-
-    // Simple health check for "is the server up?"
-    if (req.method === "GET" && req.url === "/health") {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true, name: SERVER_NAME, version: SERVER_VERSION }));
-      return;
-    }
-
-    // Route only the MCP path; everything else 404.
-    if (req.url !== path) {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Not found" }));
-      return;
-    }
-
-    // Read body (Node http does not parse JSON for us).
-    let body: unknown = undefined;
-    if (req.method === "POST") {
-      const chunks: Buffer[] = [];
-      for await (const c of req) chunks.push(c as Buffer);
-      const raw = Buffer.concat(chunks).toString("utf8");
-      if (raw) {
-        try {
-          body = JSON.parse(raw);
-        } catch {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Invalid JSON" }));
-          return;
-        }
-      }
-    }
-
-    // One transport per request (stateless mode — recommended by MCP docs).
-    const t = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined,
-      enableJsonResponse: true,
-    });
-    res.on("close", () => {
-      t.close().catch(() => {
-        /* ignore */
-      });
-    });
-    try {
-      await server.connect(t);
-      await t.handleRequest(req, res, body);
-    } catch (err) {
-      console.error(`[${SERVER_NAME}] HTTP request error:`, err);
-      if (!res.headersSent) {
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Internal server error" }));
-      }
-    }
+  // All server mechanics (Bearer auth via MCP_HTTP_TOKEN, loopback-bind
+  // enforcement, origin check, /health, graceful shutdown) live in http.ts.
+  await startHttpServer(server, {
+    host: process.env.MCP_HTTP_HOST ?? "127.0.0.1",
+    port: parseInt(process.env.MCP_HTTP_PORT ?? "3000", 10),
+    path: process.env.MCP_HTTP_PATH ?? "/mcp",
+    authToken: process.env.MCP_HTTP_TOKEN,
+    installSignalHandlers: true,
   });
-
-  httpServer.listen(port, host, () => {
-    console.error(
-      `[${SERVER_NAME}] Ready (http) — http://${host}:${port}${path}\n` +
-        `  Health: http://${host}:${port}/health\n` +
-        `  Paste the MCP URL into Cowork → Settings → MCPs → Add custom connector.`,
-    );
-  });
-
-  // Graceful shutdown
-  const shutdown = (signal: string): void => {
-    console.error(`[${SERVER_NAME}] ${signal} received — shutting down.`);
-    httpServer.close(() => process.exit(0));
-    // Force exit after 5s if connections hang.
-    setTimeout(() => process.exit(1), 5000).unref();
-  };
-  process.on("SIGINT", () => shutdown("SIGINT"));
-  process.on("SIGTERM", () => shutdown("SIGTERM"));
 }
 
 main().catch((err) => {
-  console.error(`[${SERVER_NAME}] Unhandled error:`, err);
+  const message = err instanceof Error ? (err.stack ?? err.message) : String(err);
+  console.error(redactSecrets(`[${SERVER_NAME}] Unhandled error: ${message}`));
   process.exit(1);
 });

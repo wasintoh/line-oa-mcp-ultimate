@@ -73,13 +73,17 @@ import { registerCancelOrderTool } from "./tools/cancel-order.js";
 import { registerGetSettlementTool } from "./tools/get-settlement.js";
 import { registerCreateCheckoutLinkTool } from "./tools/create-checkout-link.js";
 
+// v2.1 — Rich Menu Studio. The tool file itself lazy-loads the renderer
+// (satori/resvg) inside the handler, so registering it costs ~nothing.
+import { registerDesignRichMenuImageTool } from "./tools/design-rich-menu-image.js";
+
 export function buildServer(): McpServer {
   const server = new McpServer({
     name: SERVER_NAME,
     version: SERVER_VERSION,
   });
 
-  // ---- Tools (34 total) ----
+  // ---- Tools (35 messaging + 14 MyShop opt-in = 49 total) ----
 
   // A. Messaging
   registerSendMessageTool(server);
@@ -156,6 +160,9 @@ export function buildServer(): McpServer {
     registerGetSettlementTool(server);
     registerCreateCheckoutLinkTool(server);
   }
+
+  // K. Rich Menu Studio (v2.1)
+  registerDesignRichMenuImageTool(server);
 
   // ---- Resources + Prompts ----
   registerResources(server);

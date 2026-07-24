@@ -243,4 +243,45 @@ export function registerPrompts(server: McpServer): void {
       ],
     }),
   );
+
+  // ---- design-rich-menu (v2.1 Rich Menu Studio) ----
+  server.registerPrompt(
+    "design-rich-menu",
+    {
+      title: "Design a Rich Menu (guided)",
+      description:
+        "Guided flow: brand colors/font/purpose → template + cells → preview image → iterate → deploy with confirmation.",
+      argsSchema: {
+        purpose: z
+          .string()
+          .optional()
+          .describe('ธุรกิจ/เป้าหมายของเมนู เช่น "ร้านกาแฟ สะสมแต้ม", "คลินิกจองคิว"'),
+        brand_primary: z.string().optional().describe('สีหลักของแบรนด์ (hex) เช่น "#06C755"'),
+        oa: z.string().optional(),
+      },
+    },
+    ({ purpose, brand_primary, oa }) => ({
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: `ช่วยออกแบบ LINE Rich Menu${purpose ? ` สำหรับ "${purpose}"` : ""}${oa ? ` ใน OA "${oa}"` : ""} เป็นภาษาไทย ตามขั้นตอนนี้:
+
+1. ถามข้อมูลแบรนด์ที่ยังขาด: สีหลัก${brand_primary ? ` (ได้มาแล้ว: ${brand_primary})` : ""} / สีรอง / ฟอนต์ (line-seed = หน้าตาเหมือนแอป LINE, prompt, noto) / จุดประสงค์หลักของเมนู (ขายของ? จองคิว? สะสมแต้ม?)
+
+2. เสนอ template ที่เหมาะ (grid_6 คลาสสิก 6 ปุ่ม / hero_top_3 มี banner ใหญ่ / hero_left_2 / grid_4 / split_2 / full_1 / compact_3 / compact_2 / compact_1) พร้อม label + sublabel + icon_emoji + action ของแต่ละปุ่ม ให้ user เลือกก่อน
+
+3. เรียก line_design_rich_menu_image ด้วย mode="preview" (default) — ห้ามข้ามขั้นนี้
+
+4. แสดงรูป preview ให้ user ดูจริง ๆ แล้วถาม feedback: สีตรง brand ไหม ตัวอักษรไทยอ่านง่ายไหม ปุ่มครบไหม — ปรับแล้ว preview ใหม่จนกว่า user จะพอใจ
+
+5. เมื่อ user ยืนยันแล้วเท่านั้น → เรียกอีกครั้งด้วย mode="deploy" + deploy: { name, set_default: true } (ถามก่อนว่าจะตั้งเป็นเมนู default เลยไหม และถ้าทำระบบ tab-switch ให้ตั้ง alias ด้วย)
+
+6. สรุปผล: rich_menu_id, ตั้ง default แล้วหรือยัง, แนะนำ line_link_rich_menu ถ้าอยากผูกเมนูเฉพาะกลุ่ม`,
+          },
+        },
+      ],
+    }),
+  );
 }

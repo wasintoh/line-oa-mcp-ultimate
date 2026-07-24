@@ -1,3 +1,5 @@
+> ⚠️ Superseded — release history now lives in [CHANGELOG.md](./CHANGELOG.md).
+
 # Release Notes — v1.0.4
 
 **Release date:** 2026-06-01

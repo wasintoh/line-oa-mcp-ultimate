@@ -39,32 +39,16 @@ const InputSchema = z
   })
   .strict();
 
-type Input = z.infer<typeof InputSchema>;
+type _Input = z.infer<typeof InputSchema>; // kept for doc purposes
 
 export function registerEstimateSendCostTool(server: McpServer): void {
   server.registerTool(
     "line_estimate_send_cost",
     {
       title: "Estimate LINE send cost",
-      description: `Estimate how many quota messages a planned send will consume — without actually sending. Useful before user confirmation, especially for narrowcast / broadcast.
+      description: `Estimate how many quota messages a planned send will consume, without sending. Useful before confirmation, especially for narrowcast/broadcast. target uses the same shapes as line_send_message; message_count (1-5, default 1) — LINE charges message_count × recipients. Recipients are exact for user_id(s), looked up for a numeric audience, and unknown for filter/everyone (recommends a line_send_message dry_run instead).
 
-Args:
-  - target: Same shapes as line_send_message ({ user_id } | { user_ids } | { audience } | { filter } | { everyone: true }).
-  - message_count: How many message objects in the send (1-5, default 1). LINE charges per message * recipients.
-  - oa: optional OA id.
-
-Returns:
-  {
-    estimated_recipients?: number,      // known exactly for user_id(s); approximate for audience; unknown for filter/everyone
-    estimated_cost_messages?: number,   // recipients * message_count
-    quota: { used, total, remaining, percentage_used },
-    cost_share_percent?: number,        // estimated_cost / remaining
-    notes: string[]
-  }
-
-Notes:
-  - For target.audience: we look up audience_count via line_list_audiences first.
-  - For target.filter or target.everyone: exact estimation isn't possible from API alone — we surface "unknown" and recommend a dry_run via line_send_message instead.`,
+Returns { estimated_recipients?, estimated_cost_messages?, quota, cost_share_percent?, notes[] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

@@ -58,18 +58,9 @@ export function registerCreateProductTool(server: McpServer): void {
     "line_create_product",
     {
       title: "Create a LINE Shopping product",
-      description: `Create a product in LINE Shopping (MyShop). POST /myshop/v1/products.
+      description: `Create a product in LINE Shopping (MyShop). POST /myshop/v1/products. Simple: name + price (+ on_hand, sku, weight) → one default variant. Multi-variant: pass variants[] = [{ price, weight?, sku?, on_hand_number? }]. image_urls[] must be public HTTPS JPEG/PNG (no upload API — host first). New products are created HIDDEN (isDisplay=false) — publish with line_set_product_visibility.
 
-  - Simple: pass name + price (+ on_hand, sku, weight) → creates one default variant.
-  - Multi-variant: pass variants[] = [{ price, weight?, sku?, on_hand_number? }].
-  - image_urls[]: public HTTPS JPEG/PNG only (no upload API — host the image first).
-  - New products are created HIDDEN (isDisplay=false). Use line_set_product_visibility to publish.
-
-Examples:
-  - "เพิ่มสินค้าเสื้อยืด 299 บาท สต็อก 50" →
-      { name: "เสื้อยืด", price: 299, on_hand: 50 }
-  - "เพิ่มสินค้า 2 ไซส์" →
-      { name: "เสื้อโปโล", variants: [{ price: 390, sku: "M" }, { price: 390, sku: "L" }] }`,
+Example: "เพิ่มเสื้อยืด 299 สต็อก 50" → { name:"เสื้อยืด", price:299, on_hand:50 }.`,
       inputSchema: InputSchema.shape,
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     },

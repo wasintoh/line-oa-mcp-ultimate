@@ -47,18 +47,9 @@ export function registerListOrdersTool(server: McpServer): void {
     "line_list_orders",
     {
       title: "List LINE Shopping orders",
-      description: `List/search orders in LINE Shopping (MyShop). GET /myshop/v1/orders.
+      description: `List/search orders in LINE Shopping (MyShop). GET /myshop/v1/orders. No order webhook in this server (by design) — to detect new orders, poll on a schedule with a status/time filter, e.g. { payment_status:["PAID"], start_at:"<last run ISO>" }. Filters: search, order_status[], payment_status[], payment_method, shipment_status, start_at/end_at (ISO), sort_by, order_by, pagination.
 
-POLLING: there is no order webhook in this server (by design — no server required).
-To detect new orders, call this on a schedule with a time window or status filter,
-e.g. { payment_status: ["PAID"], start_at: "<last run ISO>" }.
-
-Filters: search, order_status[], payment_status[], payment_method, shipment_status,
-start_at/end_at (ISO), sort_by, order_by, pagination.
-
-Examples:
-  - "ออเดอร์ที่จ่ายแล้ววันนี้" → { payment_status: ["PAID"], start_at: "2026-06-03T00:00:00+07:00" }
-  - "ค้นออเดอร์ของคุณสมชาย" → { search: "สมชาย" }`,
+Example: "ออเดอร์ที่จ่ายแล้ววันนี้" → { payment_status:["PAID"], start_at:"2026-06-03T00:00:00+07:00" }.`,
       inputSchema: InputSchema.shape,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

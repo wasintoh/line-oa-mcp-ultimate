@@ -103,37 +103,13 @@ export function registerDesignImagemapTool(server: McpServer): void {
     "line_design_imagemap",
     {
       title: "Design LINE Imagemap (Rich Message)",
-      description: `Build a validated Imagemap message (LINE OA Manager calls this a "Rich Message") and return it as JSON, ready to hand to line_send_message. DESIGN ONLY — this never calls the LINE API; it just builds + validates the message object.
+      description: `Build a validated Imagemap message (LINE OA Manager calls it a "Rich Message") and return it as JSON to hand to line_send_message via message.message_json. DESIGN ONLY — never calls the LINE API.
 
-Image hosting (read carefully):
-  - LINE has NO imagemap-image upload API. You MUST pre-host the image yourself at a public HTTPS base_url.
-  - At send time LINE fetches sized variants: \`\${base_url}/1040\`, \`/700\`, \`/460\`, \`/300\`, \`/240\`. Host all of them (or a server that serves the right size per suffix).
-  - baseSize.width is always forced to ${IMAGEMAP_BASE_WIDTH}. You only provide base_height (the image height when width = ${IMAGEMAP_BASE_WIDTH}). All area coordinates are px on that ${IMAGEMAP_BASE_WIDTH}-wide canvas.
+Image hosting (critical): LINE has NO imagemap-image upload API — you must pre-host the image at a public HTTPS base_url, and LINE fetches sized variants \`\${base_url}/1040\`, \`/700\`, \`/460\`, \`/300\`, \`/240\` (host all, or serve the right size per suffix). Canvas width is always forced to ${IMAGEMAP_BASE_WIDTH}; you give base_height and all area coordinates in px on that ${IMAGEMAP_BASE_WIDTH}-wide canvas. areas must fit inside ${IMAGEMAP_BASE_WIDTH} × base_height. Optional video area supported.
 
-Args:
-  - base_url: HTTPS base URL of the hosted image set (≤1000 chars).
-  - alt_text: Fallback text (1..400 chars).
-  - base_height: Integer image height at width ${IMAGEMAP_BASE_WIDTH}.
-  - areas: ≥1 tappable area, each { bounds: { x, y, width, height (ints) }, action: { type:"uri", uri, label? } | { type:"message", text, label? } }. Areas must fit inside ${IMAGEMAP_BASE_WIDTH} × base_height.
-  - video: optional { original_content_url, preview_image_url, area, external_link? }.
+Returns { message, usage_hint }.
 
-Returns:
-  { message: <LINE imagemap message object>, usage_hint: string }
-
-Composability:
-  - Build here → grab \`message\` → send via line_send_message (raw message passthrough).
-
-Examples:
-  - "Rich Message โปรโมชั่น ครึ่งบน-ครึ่งล่าง กดไปคนละลิงก์" →
-    { base_url: "https://cdn.example.com/promo", alt_text: "โปรโมชั่นเดือนนี้", base_height: 1040,
-      areas: [
-        { bounds: { x: 0, y: 0, width: 1040, height: 520 }, action: { type: "uri", uri: "https://shop.example.com/a" } },
-        { bounds: { x: 0, y: 520, width: 1040, height: 520 }, action: { type: "uri", uri: "https://shop.example.com/b" } }
-      ] }
-
-Errors:
-  - base_url ต้องเป็น HTTPS → fix the URL scheme
-  - พื้นที่เกินขอบรูป → an area's x+width or y+height exceeds ${IMAGEMAP_BASE_WIDTH} × base_height`,
+Example: "Rich Message ครึ่งบน-ครึ่งล่าง กดไปคนละลิงก์" → { base_url:"https://cdn.example.com/promo", alt_text:"โปรเดือนนี้", base_height:1040, areas:[{bounds:{x:0,y:0,width:1040,height:520},action:{type:"uri",uri:"https://shop.example.com/a"}},{bounds:{x:0,y:520,width:1040,height:520},action:{type:"uri",uri:"https://shop.example.com/b"}}] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

@@ -116,50 +116,18 @@ export function registerDesignCardTool(server: McpServer): void {
     "line_design_card",
     {
       title: "Design LINE Card Message (Template)",
-      description: `Build a validated Template message (LINE OA Manager calls this a "Card Message") and return it as JSON, ready to hand to line_send_message. DESIGN ONLY — this never calls the LINE API; it just builds + validates the message object. Supports all four LINE template subtypes.
+      description: `Build a validated LINE Template message (LINE OA Manager calls it a "Card Message") and return it as JSON to hand to line_send_message via message.message_json. DESIGN ONLY — never calls the LINE API.
 
-Subtypes (set via \`kind\`) and their LINE limits:
-  - buttons        → { title?, text, thumbnail_image_url?, actions } — 1..${TEMPLATE_BUTTONS_MAX_ACTIONS} buttons. text ≤60 chars with title/thumb, else ≤160.
-  - confirm        → { text, actions } — exactly ${TEMPLATE_CONFIRM_ACTIONS} buttons (e.g. ตกลง / ยกเลิก).
-  - carousel       → { columns } — ≤${TEMPLATE_CAROUSEL_MAX_COLUMNS} columns, each ≤${TEMPLATE_CAROUSEL_MAX_ACTIONS_PER_COLUMN} buttons. EVERY column must have the SAME number of buttons (LINE rule). Each column: { title?, text, thumbnail_image_url?, default_action?, actions }.
-  - image_carousel → { columns } — ≤${TEMPLATE_IMAGE_CAROUSEL_MAX_COLUMNS} columns, each { image_url (HTTPS), action }.
+\`kind\` (required) picks the subtype and enforces LINE limits:
+  - buttons → title?, text, thumbnail_image_url?, actions (1..${TEMPLATE_BUTTONS_MAX_ACTIONS} buttons; text ≤60 chars with title/thumb, else ≤160)
+  - confirm → text + exactly ${TEMPLATE_CONFIRM_ACTIONS} buttons (e.g. ตกลง / ยกเลิก)
+  - carousel → columns (≤${TEMPLATE_CAROUSEL_MAX_COLUMNS}, each ≤${TEMPLATE_CAROUSEL_MAX_ACTIONS_PER_COLUMN} buttons); EVERY column must have the SAME number of buttons (LINE rule)
+  - image_carousel → columns of { image_url (HTTPS), action } (≤${TEMPLATE_IMAGE_CAROUSEL_MAX_COLUMNS})
+Actions: uri | message | postback; label ≤20 chars. alt_text (1..400) required.
 
-Action shape (used in actions / default_action / image_carousel action):
-  { type:"uri", label, uri } | { type:"message", label, text } | { type:"postback", label, data, displayText? }
-  label ≤20 chars. uri accepts http/https/tel/line.
+Returns { message, usage_hint }.
 
-Args:
-  - kind: one of buttons | confirm | carousel | image_carousel (required).
-  - alt_text: fallback text (1..400 chars, required).
-  - title?, text?, thumbnail_image_url?, actions? — used by buttons/confirm.
-  - columns? — used by carousel/image_carousel.
-
-Returns:
-  { message: <LINE template message object>, usage_hint: string }
-
-Composability:
-  - Build here → grab \`message\` → send via line_send_message (raw message passthrough).
-
-Examples:
-  - "การ์ดยืนยันการจอง ตกลง/ยกเลิก" →
-    { kind: "confirm", alt_text: "ยืนยันการจอง", text: "ยืนยันการจองคิวเวลา 14:00 ไหม?",
-      actions: [
-        { type: "postback", label: "ตกลง", data: "confirm=1" },
-        { type: "message", label: "ยกเลิก", text: "ยกเลิก" }
-      ] }
-  - "การ์ดเมนู 3 ปุ่ม มีรูป" →
-    { kind: "buttons", alt_text: "เมนูร้าน", title: "ร้านกาแฟ", text: "เลือกเมนูที่สนใจ",
-      thumbnail_image_url: "https://cdn.example.com/cover.jpg",
-      actions: [
-        { type: "uri", label: "ดูเมนู", uri: "https://shop.example.com/menu" },
-        { type: "message", label: "โปรวันนี้", text: "โปรวันนี้" }
-      ] }
-
-Errors:
-  - "buttons: ต้องมี actions อย่างน้อย 1 ปุ่ม" → supply actions for kind=buttons
-  - "confirm: ต้องมี ${TEMPLATE_CONFIRM_ACTIONS} ปุ่มเป๊ะ" → confirm needs exactly two
-  - "carousel: ทุก column ต้องมีจำนวน action เท่ากัน" → equalize button counts across columns
-  - "action.label ยาวเกิน 20 ตัวอักษร" → shorten the label`,
+Example: "การ์ดยืนยันการจอง ตกลง/ยกเลิก" → { kind:"confirm", alt_text:"ยืนยันการจอง", text:"ยืนยันคิว 14:00 ไหม?", actions:[{type:"postback",label:"ตกลง",data:"confirm=1"},{type:"message",label:"ยกเลิก",text:"ยกเลิก"}] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

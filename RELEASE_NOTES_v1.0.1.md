@@ -1,3 +1,5 @@
+> ⚠️ Superseded — release history now lives in [CHANGELOG.md](./CHANGELOG.md).
+
 # v1.0.1 — Initial Public Release 🎉
 
 The first stable release of **LINE OA MCP Ultimate** — a Model Context Protocol server that lets you operate your LINE Official Account from any AI agent through natural language.

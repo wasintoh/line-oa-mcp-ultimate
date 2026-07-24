@@ -17,6 +17,7 @@ import { z } from "zod";
 
 import { resolveOa } from "../config/multi-oa.js";
 import { LineApiError, LineClient } from "../line/client.js";
+import { redactSecrets } from "../line/redact.js";
 import { FLEX_TEMPLATE_NAMES, renderTemplate } from "../line/flex-templates.js";
 import { checkQuota } from "../line/quota-guardian.js";
 import { quietHoursCheck } from "../line/quiet-hours.js";
@@ -253,50 +254,15 @@ export function registerSendMessageTool(server: McpServer): void {
     "line_send_message",
     {
       title: "Send LINE Message (universal)",
-      description: `Send any LINE message to any target. Picks the right LINE API automatically (reply / push / multicast / narrowcast / broadcast) based on the shape of \`target\`.
+      description: `Universal LINE sender. Auto-picks the API (reply/push/multicast/narrowcast/broadcast) from the \`target\` shape; \`message\` shape selects text/template/flex/sticker/coupon/image/video. Feed pre-built objects from line_design_imagemap/line_design_card/line_design_flex via message.message_json; native coupons from line_manage_coupon via message.coupon_id.
 
-Three modes (parameter \`mode\`):
-  - send_now (default): Send immediately. Pre-flight validation + Quota Guardian + quiet-hours check are applied.
-  - draft: DO NOT SEND. Return a "handoff package" with audience id, Flex JSON, a LINE OA Manager broadcast URL, and 6 click-through steps. Use this when the user wants to SCHEDULE — LINE OA Manager UI has native scheduling that Messaging API lacks.
-  - dry_run: Validate + estimate cost only. Useful before \`confirm\` flows.
+mode: send_now (default) sends immediately; draft returns a LINE OA Manager handoff package (URL + Flex JSON + steps) — use when the user wants to SCHEDULE, since the Messaging API can't schedule but the OA Manager UI can; dry_run validates + estimates cost without sending.
 
-Target shapes (pick one):
-  - { reply_to: "webhookEventId" }          — reply (1 user, free, 30s window)
-  - { user_id: "U..." }                      — push to one
-  - { user_ids: ["U...", "U..."] }           — multicast (auto-chunked to 500/call)
-  - { audience: "name-or-id" }               — narrowcast by audience group
-  - { filter: { ages, genders, areas, ... } } — narrowcast by demographic
-  - { everyone: true }                       — broadcast (requires confirm: true)
+Safety: pre-flight /validate before spending quota; Quota Guardian blocks if projected cost >95% of remaining quota unless confirm=true; broadcast { everyone:true } requires confirm=true; quiet-hours 22:00–08:00 BKK warns unless force=true; quiet_push silences the recipient device; reply tokens expire ~1 min (falls back to a push hint).
 
-Message shapes (pick one):
-  - { text: "..." }                          — plain text (≤5000 chars)
-  - { template: "voucher", data: {...} }     — pre-built Thai-localized Flex template
-  - { flex_json: {...}, alt_text: "..." }    — raw Flex JSON (advanced)
-  - { sticker: { package_id, sticker_id } }  — LINE sticker
-  - { coupon_id: "01..." , delivery_tag? }   — native LINE coupon (from line_manage_coupon)
+Returns send_now → { success, transport, request_id?, recipient_count_estimated, quota, warnings[] }; draft and dry_run return their own shapes. Narrowcast needs ~24h before line_get_message_stats shows engagement.
 
-Auto-applied safety:
-  - Pre-flight validation via LINE /validate (catches JSON errors before consuming quota)
-  - Quota Guardian: blocks if projected cost > 95% of remaining quota unless confirm=true
-  - Quiet-hours warning (22:00–08:00 BKK) unless force=true
-  - Reply-token TTL handling: falls back to push if token is expired (with a warning)
-  - Auto-generated X-Line-Retry-Key for safe retries
-
-Returns (varies by mode):
-  send_now → { success, transport, request_id?, recipient_count_estimated, quota, warnings[], next_steps? }
-  draft    → { draft: true, oa_manager_url, audience_summary, flex_json_pretty, flex_preview_url, copy_paste_steps[], notes }
-  dry_run  → { dry_run: true, transport, validated, projected_recipients, projected_cost_messages, quota, warnings[] }
-
-Examples:
-  - "ส่งข้อความให้คุณ A" → { target: { user_id: "U..." }, message: { text: "..." } }
-  - "ออกแบบโปรวันแม่ + เตรียม schedule" → { target: { audience: "moms" }, message: { template: "promo_simple", data: {...} }, mode: "draft" }
-  - "ส่งโปรให้ผู้หญิง 25-44 กรุงเทพ" → { target: { filter: { genders: ["female"], ages: ["age_25", "age_30"], areas: ["bangkok"] } }, message: {...} }
-
-Errors:
-  - QUOTA_OVER → Reduce audience or wait for monthly reset
-  - QUIET_HOURS → Pass force=true or use mode=draft to schedule
-  - INVALID_MESSAGE → Pre-validation caught a JSON error; check details
-  - AUDIENCE_NOT_READY → Wait ~10 minutes after audience creation`,
+Example: "ส่งโปรให้ผู้หญิง 25-44 กรุงเทพ" → target.filter { genders:["female"], ages:["age_25","age_30"], areas:["bangkok"] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -325,6 +291,14 @@ Errors:
 
         // Resolve transport
         const picked = pickTransport({ client, target: params.target });
+
+        // Reply token unavailable → honest, actionable error (no fake fallback).
+        if (picked.unavailableReason) {
+          return {
+            isError: true,
+            content: [{ type: "text", text: picked.unavailableReason }],
+          };
+        }
 
         // Validate FIRST (cheap; avoids burning quota on JSON errors)
         await picked.validate(messages);
@@ -526,6 +500,6 @@ function errorReply(err: unknown): {
   const msg = err instanceof Error ? err.message : String(err);
   return {
     isError: true,
-    content: [{ type: "text", text: TH.unknownError(msg) }],
+    content: [{ type: "text", text: TH.unknownError(redactSecrets(msg)) }],
   };
 }

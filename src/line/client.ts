@@ -16,6 +16,7 @@ import { randomUUID } from "node:crypto";
 
 import { LINE_API_BASE, LINE_API_DATA_BASE } from "../constants.js";
 import { TH } from "../i18n/th.js";
+import { redactSecrets } from "./redact.js";
 import type { LineMessage, LineQuota, LineQuotaConsumption } from "../types.js";
 
 export interface LineClientOptions {
@@ -37,10 +38,12 @@ export class LineApiError extends Error {
   public readonly details: string[];
 
   constructor(status: number, body: unknown) {
-    super(formatMessage(status, body));
+    // Redact registered secrets — LINE error bodies can echo the Authorization
+    // header, and this message flows straight into MCP tool replies.
+    super(redactSecrets(formatMessage(status, body)));
     this.status = status;
     this.body = body;
-    this.details = collectDetails(body);
+    this.details = collectDetails(body).map((d) => redactSecrets(d));
     this.name = "LineApiError";
   }
 }

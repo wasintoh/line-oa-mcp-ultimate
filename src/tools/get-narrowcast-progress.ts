@@ -56,26 +56,9 @@ export function registerGetNarrowcastProgressTool(server: McpServer): void {
     "line_get_narrowcast_progress",
     {
       title: "Get LINE Narrowcast Progress",
-      description: `Poll the delivery progress of an async narrowcast send (GET /v2/bot/message/progress/narrowcast). Narrowcast runs in the background — the send returns a request_id, and this tool reports how far it has gotten.
+      description: `Poll the delivery progress of an async narrowcast (GET /v2/bot/message/progress/narrowcast). Narrowcast runs in the background — the send returns a request_id and this reports how far it got. Pass that request_id.
 
-Args:
-  - request_id (string): the id returned by a prior narrowcast send.
-  - oa (string, optional): OA id. Default = active OA.
-
-Returns:
-  {
-    request_id, phase,           // waiting | sending | succeeded | failed
-    status_text,                 // Thai-readable status line
-    success_count?, failure_count?, target_count?,
-    failed_description?, error_code?,
-    accepted_time?, completed_time?
-  }
-
-Examples:
-  - "narrowcast เสร็จยัง" → { request_id: "<id from send>" }
-
-Errors:
-  - Unknown / expired request_id → LineApiError surfaced.`,
+Returns { request_id, phase (waiting|sending|succeeded|failed), status_text, success_count?, failure_count?, target_count?, error_code?, accepted_time?, completed_time? }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

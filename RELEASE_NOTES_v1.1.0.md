@@ -1,3 +1,5 @@
+> ⚠️ Superseded — release history now lives in [CHANGELOG.md](./CHANGELOG.md).
+
 # Release Notes — v1.1.0 (API Completeness)
 
 **Theme:** Complete LINE's **token-only** Messaging API surface — every tool works with just a channel access token, no webhook, no hosted server. Stays fully npx-installable in Claude Cowork, Claude Code, Codex, OpenClaw, Hermes, and any MCP host.

@@ -25,15 +25,9 @@ export function registerDeleteAudienceTool(server: McpServer): void {
     "line_delete_audience",
     {
       title: "Delete LINE audience",
-      description: `Delete an audience group. Irreversible — requires confirm=true.
+      description: `Delete an audience group. Irreversible — requires confirm=true. audience_group_id (numeric) from line_list_audiences.
 
-Args:
-  - audience_group_id: numeric ID (from line_list_audiences).
-  - confirm: must be true to proceed.
-  - oa: optional OA id.
-
-Returns:
-  { success: true, deleted_id }`,
+Returns { success, deleted_id }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,

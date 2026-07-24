@@ -1,0 +1,34 @@
+# Dependency audit — fails on high/critical advisories.
+# Runs weekly (Mon 02:00 UTC = 09:00 Asia/Bangkok), on any PR that touches
+# package files, and on demand via workflow_dispatch.
+#
+# Two gates, both strict:
+#   1. production tree only (--omit=dev) — what npx users actually install
+#   2. full tree — dev tooling included
+# `npm audit` reads package.json + package-lock.json; no install needed.
+name: audit
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"
+  pull_request:
+    paths:
+      - "package.json"
+      - "package-lock.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+      - name: Audit production dependencies (strict)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Audit full tree (incl. dev)
+        run: npm audit --audit-level=high

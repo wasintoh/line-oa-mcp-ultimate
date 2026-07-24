@@ -1,0 +1,34 @@
+# CI — typecheck + tests (coverage gate: 80% lines, see vitest.config.ts) + build.
+# Runs on every PR and every push to main, across Node 20 and 22.
+#
+# NOTE: `npm run lint` is intentionally NOT run here — the repo has no
+# eslint.config.js yet (ESLint 9 flat config), so the script currently exits
+# non-zero. Add the config, then insert `- run: npm run lint` after `npm ci`.
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Node ${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22]
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npx vitest run --coverage
+      - run: npm run build

@@ -15,6 +15,7 @@
 
 import { MYSHOP_API_BASE, SERVER_NAME, SERVER_VERSION } from "../constants.js";
 import { TH } from "../i18n/th.js";
+import { redactSecrets } from "./redact.js";
 import type {
   CheckoutLinkItem,
   MyShopCheckoutResult,
@@ -49,7 +50,9 @@ export class MyShopApiError extends Error {
   public readonly body: unknown;
 
   constructor(status: number, body: unknown) {
-    super(formatMessage(status, body));
+    // Redact registered secrets — MyShop error bodies can echo the X-API-KEY,
+    // and this message flows straight into MCP tool replies.
+    super(redactSecrets(formatMessage(status, body)));
     this.status = status;
     const b = body as MyShopErrorShape | undefined;
     this.code = b?.code;

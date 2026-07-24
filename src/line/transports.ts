@@ -8,6 +8,7 @@
  */
 
 import { MULTICAST_MAX_RECIPIENTS } from "../constants.js";
+import { TH } from "../i18n/th.js";
 import type { LineClient } from "./client.js";
 import type {
   LineMessage,
@@ -20,6 +21,11 @@ export interface PickedTransport {
   transport: SendTransport;
   /** Approximate recipient count for cost estimation (undefined for narrowcast/broadcast). */
   estimatedRecipients?: number;
+  /**
+   * Set when the transport cannot deliver (e.g. reply token unknown/expired).
+   * Callers should surface this Thai message instead of attempting the send.
+   */
+  unavailableReason?: string;
   /** Closure that executes the send. */
   send: (
     messages: LineMessage[],
@@ -44,15 +50,18 @@ export function pickTransport(input: PickTransportInput): PickedTransport {
   if ("reply_to" in target) {
     const replyToken = input.resolveReplyToken?.(target.reply_to);
     if (!replyToken) {
-      // The caller is expected to fall back to push if the token is gone.
-      // We surface this via a transport that throws on send.
+      // No usable reply token — a push fallback is impossible here (we only
+      // have a webhookEventId, not the user id), so surface an honest error.
       return {
         transport: "reply",
         estimatedRecipients: 1,
+        unavailableReason: TH.replyTokenUnavailable,
         send: async () => {
-          throw new Error("Reply token expired or unknown. Fall back to push.");
+          throw new Error(TH.replyTokenUnavailable);
         },
-        validate: () => client.validatePush([]).then(() => undefined),
+        validate: async (messages) => {
+          await client.validateReply(messages);
+        },
       };
     }
     return {

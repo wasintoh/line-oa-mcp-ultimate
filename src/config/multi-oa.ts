@@ -11,15 +11,18 @@
  * That switch is in-memory only — it does not modify the config file.
  */
 
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
+import { SERVER_NAME } from "../constants.js";
 import { TH } from "../i18n/th.js";
+import { clearRegisteredSecrets, registerSecret } from "../line/redact.js";
 import type { MultiOaConfig, OaConfig } from "../types.js";
 
 let _activeConfig: MultiOaConfig | null = null;
 let _activeOaId: string | null = null;
+let _permissionWarningShown = false;
 
 /**
  * Load (or reload) the multi-OA configuration into module-level state.
@@ -29,12 +32,14 @@ export function loadConfig(): MultiOaConfig {
   // 1 — explicit config file
   const explicitPath = process.env.LINE_MCP_CONFIG;
   if (explicitPath) {
+    warnIfConfigReadableByOthers(explicitPath);
     return _setConfig(readJson(explicitPath));
   }
 
   // 2 — default config file
   const defaultPath = join(homedir(), ".line-mcp", "config.json");
   if (existsSync(defaultPath)) {
+    warnIfConfigReadableByOthers(defaultPath);
     return _setConfig(readJson(defaultPath));
   }
 
@@ -120,6 +125,17 @@ export function listOas(): { id: string; config: OaConfig; is_active: boolean }[
   }));
 }
 
+/**
+ * TEST-ONLY seam — clear the module-level config cache and active-OA switch.
+ * Production code never calls this; tests use it to isolate config scenarios.
+ */
+export function resetConfigCache(): void {
+  _activeConfig = null;
+  _activeOaId = null;
+  _permissionWarningShown = false;
+  clearRegisteredSecrets();
+}
+
 /** Return the cached config (loads if not loaded yet). */
 export function getConfig(): MultiOaConfig {
   if (!_activeConfig) {
@@ -145,8 +161,37 @@ function _setConfig(cfg: MultiOaConfig): MultiOaConfig {
       throw new Error(`Invalid config: OA '${id}' is missing channel_access_token`);
     }
   }
+
+  // Token hygiene — register every secret so error messages / logs that echo
+  // them (e.g. LINE 400 bodies quoting the Authorization header) are redacted.
+  for (const oa of Object.values(cfg.oas)) {
+    registerSecret(oa.channel_access_token);
+    registerSecret(oa.channel_secret);
+    registerSecret(oa.myshop_api_key);
+  }
+  registerSecret(process.env.LINE_CHANNEL_ACCESS_TOKEN);
+  registerSecret(process.env.LINE_CHANNEL_SECRET);
+  registerSecret(process.env.LINE_MYSHOP_API_KEY);
+
   _activeConfig = cfg;
   return cfg;
+}
+
+/**
+ * One-time warning when the config file (which holds live channel tokens) is
+ * readable by group/other users. POSIX only — Windows mode bits are synthetic.
+ */
+function warnIfConfigReadableByOthers(path: string): void {
+  if (_permissionWarningShown || process.platform === "win32") return;
+  try {
+    const mode = statSync(path).mode;
+    if ((mode & 0o077) !== 0) {
+      _permissionWarningShown = true;
+      console.error(`[${SERVER_NAME}] ${TH.configFilePermissionWarning(path)}`);
+    }
+  } catch {
+    /* stat failed — the subsequent read will surface a proper error */
+  }
 }
 
 function readJson(path: string): MultiOaConfig {

@@ -22,13 +22,9 @@ export function registerUseOaTool(server: McpServer): void {
     "line_use_oa",
     {
       title: "Switch active LINE OA",
-      description: `Switch which OA all subsequent tool calls default to (until changed or process restarts). In-memory only — does not edit ~/.line-mcp/config.json.
+      description: `Switch which OA all subsequent tool calls default to (until changed or process restart). In-memory only — does not edit config.json. oa_id from line_list_oas.
 
-Args:
-  - oa_id: OA id from the multi-OA config (use line_list_oas to discover).
-
-Returns:
-  { active_oa, display_name }`,
+Returns { active_oa, display_name }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,

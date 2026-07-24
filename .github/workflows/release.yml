@@ -1,0 +1,61 @@
+# Release — publish to npm with provenance + create a GitHub Release.
+# Triggered by pushing a tag matching v* (e.g. `git tag v2.1.0 && git push --tags`).
+#
+# Required secret: NPM_TOKEN — an npm granular access token with
+# read-and-write on the line-oa-mcp-ultimate package. Add it under
+# repo Settings → Secrets and variables → Actions → New repository secret.
+# `id-token: write` lets npm attach a provenance attestation (Sigstore),
+# so npmjs.com shows the package was built from this repo by this workflow.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # create the GitHub Release
+  id-token: write # npm --provenance attestation
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: "https://registry.npmjs.org"
+
+      # Full quality gate before anything ships
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npx vitest run --coverage
+      - run: npm run build
+
+      - name: Publish to npm (with provenance)
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Pull the matching "## [X.Y.Z]" section out of CHANGELOG.md
+      - name: Extract changelog section
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v ver="$VERSION" '
+            $0 ~ ("^## \\[" ver "\\]") { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > RELEASE_BODY.md
+          if ! [ -s RELEASE_BODY.md ]; then
+            echo "No CHANGELOG.md section for ${VERSION} — see CHANGELOG.md." > RELEASE_BODY.md
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --verify-tag \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file RELEASE_BODY.md

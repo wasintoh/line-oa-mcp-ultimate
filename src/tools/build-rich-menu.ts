@@ -16,6 +16,8 @@ import { z } from "zod";
 
 import { resolveOa } from "../config/multi-oa.js";
 import { LineApiError, LineClient } from "../line/client.js";
+import { fetchPublicImage } from "../line/ssrf-guard.js";
+import { redactSecrets } from "../line/redact.js";
 import { TH } from "../i18n/th.js";
 
 const ActionSchema = z.union([
@@ -99,7 +101,7 @@ const InputSchema = z
   })
   .strict();
 
-type Input = z.infer<typeof InputSchema>;
+type _Input = z.infer<typeof InputSchema>; // kept for doc purposes
 
 const SIZE_DIMENSIONS = {
   compact: { width: 2500, height: 843 },
@@ -111,41 +113,11 @@ export function registerBuildRichMenuTool(server: McpServer): void {
     "line_build_rich_menu",
     {
       title: "Build LINE Rich Menu (single panel)",
-      description: `Create a LINE Rich Menu in one call: validate → create → upload image → set as default. Collapses what is normally 4 LINE API calls into one tool, including the api-data.line.me domain switch for image upload (the #1 cause of failed implementations).
+      description: `Create a LINE Rich Menu from an already-hosted image in one call: validate → create → upload image → set as default. Collapses 4 LINE API calls into one, incl. the api-data.line.me domain switch for image upload (the #1 cause of failed implementations). Single-panel menus only. To RENDER the image from labels instead of hosting your own, use line_design_rich_menu_image.
 
-This V1 supports single-panel rich menus. The "tab-pair" (Tab A ↔ Tab B switching design) shipped widely by Thai agencies will be added in V1.1 alongside richmenu alias support.
+image_url must be public HTTPS JPEG/PNG, width 800–2500px, aspect ≥1.45, ≤1MB (validated client-side before upload). areas are tappable regions with postback/message/uri/richmenuswitch actions and must fit inside the image bounds. size 'large' (2500x1686, default) or 'compact' (2500x843). set_as_default default true. Max 1,000 rich menus per OA.
 
-Args:
-  - name: Internal admin name (≤300 chars).
-  - chat_bar_text: Label on the chat-bar button (≤14 chars). Show in user's LINE UI.
-  - size: 'compact' (2500x843) or 'large' (2500x1686, default).
-  - image_url: Public HTTPS URL of the rich menu image. JPEG/PNG, aspect ≥1.45, ≤1MB.
-  - areas: Tappable regions with action objects (postback / message / uri / richmenuswitch).
-  - set_as_default: Set as account-wide default after creation. Default true.
-  - selected: Whether the menu auto-opens. Default true.
-  - oa: Optional OA id.
-
-Returns:
-  {
-    rich_menu_id: string,
-    name: string,
-    set_as_default: boolean,
-    warnings: string[]
-  }
-
-Image requirements (validated client-side before upload):
-  - Width: 800-2500px
-  - Aspect ratio: ≥1.45
-  - File size: ≤1MB
-  - Format: JPEG or PNG
-
-Examples:
-  - "Rich Menu โปรวันแม่ 2 ปุ่ม" → params with 2 areas, large size, set_as_default: true
-
-Errors:
-  - INVALID_AREA → Coordinates exceed image bounds
-  - IMAGE_TOO_LARGE → ≥1MB; resize and retry
-  - QUOTA_EXCEEDED → 1,000 rich menus max per OA`,
+Returns { rich_menu_id, name, set_as_default, warnings[] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -194,21 +166,36 @@ Errors:
         )) as { richMenuId: string };
         const richMenuId = createRes.richMenuId;
 
-        // 2. Download image bytes (since we only have a URL)
-        const imageRes = await fetch(params.image_url);
-        if (!imageRes.ok) {
+        // Any failure past this point would orphan the just-created menu
+        // object — delete it best-effort before surfacing the error so
+        // retries start clean.
+        const cleanupOrphan = async (): Promise<void> => {
+          try {
+            await client.deleteRichMenu(richMenuId);
+          } catch {
+            /* best-effort */
+          }
+        };
+
+        // 2. Download image bytes (since we only have a URL) — SSRF-guarded
+        let imageBuf: Buffer;
+        let contentType: string;
+        try {
+          const downloaded = await fetchPublicImage(params.image_url);
+          imageBuf = downloaded.buffer;
+          contentType = downloaded.contentType;
+        } catch (err) {
+          await cleanupOrphan();
+          const msg = err instanceof Error ? err.message : String(err);
           return {
             isError: true,
             content: [
-              {
-                type: "text",
-                text: `❌ ดาวน์โหลด image_url ไม่ได้ (HTTP ${imageRes.status}). ตรวจสอบ URL public + format`,
-              },
+              { type: "text", text: `${msg} — ตรวจสอบ image_url แล้วลองใหม่ (rich menu ที่ค้างถูกลบให้แล้ว)` },
             ],
           };
         }
-        const contentType = imageRes.headers.get("content-type") ?? "image/jpeg";
         if (!contentType.includes("png") && !contentType.includes("jpeg") && !contentType.includes("jpg")) {
+          await cleanupOrphan();
           return {
             isError: true,
             content: [
@@ -216,8 +203,8 @@ Errors:
             ],
           };
         }
-        const imageBuf = Buffer.from(await imageRes.arrayBuffer());
         if (imageBuf.length > 1_000_000) {
+          await cleanupOrphan();
           return {
             isError: true,
             content: [
@@ -244,10 +231,11 @@ Errors:
         });
         if (!uploadRes.ok) {
           const text = await uploadRes.text();
+          await cleanupOrphan();
           return {
             isError: true,
             content: [
-              { type: "text", text: `❌ Upload image ไม่สำเร็จ (${uploadRes.status}): ${text}` },
+              { type: "text", text: `❌ Upload image ไม่สำเร็จ (${uploadRes.status}): ${redactSecrets(text)} (rich menu ที่ค้างถูกลบให้แล้ว)` },
             ],
           };
         }

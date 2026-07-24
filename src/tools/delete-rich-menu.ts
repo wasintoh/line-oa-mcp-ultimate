@@ -29,17 +29,9 @@ export function registerDeleteRichMenuTool(server: McpServer): void {
     "line_delete_rich_menu",
     {
       title: "Delete LINE Rich Menu",
-      description: `Delete a rich menu by ID. If the menu is currently linked to specific users, those links break silently — consider running line_audit_user_menu first.
+      description: `Delete a rich menu by ID. Requires confirm=true (guards against prompt drift). If the menu is linked to specific users those links break silently — consider line_audit_user_menu first.
 
-Requires confirm=true to prevent accidental deletion via prompt drift.
-
-Args:
-  - rich_menu_id: The richMenuId (starts with 'richmenu-').
-  - confirm: Must be true to proceed.
-  - oa: optional OA id.
-
-Returns:
-  { success: true, deleted_id }`,
+Returns { success, deleted_id }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,

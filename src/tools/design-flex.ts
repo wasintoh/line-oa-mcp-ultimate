@@ -59,7 +59,7 @@ const InputSchema = z
   })
   .strict();
 
-type Input = z.infer<typeof InputSchema>;
+type _Input = z.infer<typeof InputSchema>; // kept for doc purposes
 
 interface DesignOutput {
   template?: string;
@@ -75,35 +75,11 @@ export function registerDesignFlexTool(server: McpServer): void {
     "line_design_flex",
     {
       title: "Design LINE Flex Message",
-      description: `Compose a validated Flex Message ready for line_send_message. Two input modes:
+      description: `Compose a validated Flex Message for line_send_message. Modes: template mode { template, data } (Thai-localized, recommended; templates: ${FLEX_TEMPLATE_NAMES.join(", ")}); raw mode { flex_json, alt_text } (advanced); or { list_templates: true } to get the catalog with Thai descriptions + required fields per template. DESIGN ONLY — never calls the LINE API.
 
-  1. Template mode (recommended for Thai use cases):
-     { template: "voucher", data: { title, code, discount, valid_until } }
-     Available templates: ${FLEX_TEMPLATE_NAMES.join(", ")}
+Feed the result to line_send_message via message.flex_json, or pass { template, data } straight to line_send_message (same templates). Returns { flex_json, alt_text, preview_url (Flex Simulator), size_bytes, warnings[] } (warns near the 30KB bubble limit).
 
-  2. Raw mode (advanced):
-     { flex_json: {...bubble or carousel JSON...}, alt_text: "..." }
-
-  3. Discovery:
-     { list_templates: true } returns the catalog with descriptions in Thai and required fields per template.
-
-Returns:
-  {
-    template?: string,
-    flex_json: { ...Flex contents... },
-    alt_text: string,
-    preview_url: string,       // LINE Flex Simulator deep link
-    size_bytes: number,
-    warnings: string[]         // e.g., if approaching the 30KB bubble limit
-  }
-
-Composability:
-  - Use line_design_flex first → grab flex_json → pass to line_send_message as { message: { flex_json, alt_text } }
-  - Or pass { message: { template, data } } directly to line_send_message — the same templates are reused.
-
-Examples:
-  - "ออกแบบคูปอง 20% หมดวันที่ 31 ส.ค." → { template: "voucher", data: { title: "ส่วนลดวันแม่", code: "MOM20", discount: "ส่วนลด 20%", valid_until: "31 ส.ค. 2026" } }
-  - "ดูว่ามี template อะไรบ้าง" → { list_templates: true }`,
+Example: "ออกแบบคูปอง 20% หมด 31 ส.ค." → { template:"voucher", data:{ title:"ส่วนลดวันแม่", code:"MOM20", discount:"ส่วนลด 20%", valid_until:"31 ส.ค. 2026" } }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

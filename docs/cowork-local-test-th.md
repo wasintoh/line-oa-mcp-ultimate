@@ -1,4 +1,4 @@
-# ทดสอบ build local ใน Claude Cowork (v2.0)
+# ทดสอบ build local ใน Claude Cowork (v2.1)
 
 > เทสโค้ดในเครื่องก่อน publish ขึ้น npm — ชี้ Cowork ไปรัน `dist/index.js` ในเครื่อง
 > แทน package จาก npm (ตัวบน npm ยังเป็นเวอร์ชันเก่า ยังไม่มี LINE Shopping)
@@ -53,7 +53,7 @@ npm run build
 
 1. **บันทึก** ไฟล์ config
 2. ปิด Cowork ทั้งแอป (`⌘ + Q`) แล้วเปิดใหม่
-3. หน้า Developer → ควรเห็น `line` status `running` — ถ้ามี MyShop key จะมี **48 tools** (34 messaging + 14 shopping), ถ้าไม่มีจะมี 34
+3. หน้า Developer → ควรเห็น `line` status `running` — ถ้ามี MyShop key จะมี **49 tools** (35 messaging + 14 shopping), ถ้าไม่มีจะมี 35
 4. ลองพิมพ์ใน Cowork:
 
    ```

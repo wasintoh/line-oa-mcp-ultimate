@@ -41,23 +41,11 @@ export function registerBuildAudienceFromCsvTool(server: McpServer): void {
     "line_build_audience_from_csv",
     {
       title: "Build LINE audience from user IDs",
-      description: `Create a new LINE audience by uploading user IDs (or IFAs). After creation LINE indexes the audience for ~5-10 minutes — line_list_audiences will report status=IN_PROGRESS during that window, then READY.
+      description: `Create a LINE audience by uploading user IDs (or IFAs) — the "CSV from Google Sheets → retargeting audience" flow most Thai SMBs need. LINE indexes for ~5-10 min after creation (line_list_audiences shows IN_PROGRESS then READY). user_ids max 10,000/call; is_ifa true for IFA values instead of LINE user IDs. Region-gated to JP/TW/TH OAs (+premium).
 
-This is the "CSV from Google Sheets → retargeting audience" flow most Thai SMBs need.
+Returns { audience_group_id, name, type, created_unix_ms }.
 
-Args:
-  - name: Audience name (≤120 chars).
-  - user_ids: Array of LINE user IDs (max 10,000 per call).
-  - is_ifa: True for IFA values instead of LINE user IDs (default false).
-  - oa: optional OA id.
-
-Returns:
-  { audience_group_id, name, type, created_unix_ms }
-
-Region note: Audience Management API is gated to JP / TW / TH OAs (+ premium).
-
-Examples:
-  - "สร้าง audience ลูกค้าเดือนก่อน" → { name: "buyers_last_month", user_ids: [...] }`,
+Example: "สร้าง audience ลูกค้าเดือนก่อน" → { name:"buyers_last_month", user_ids:[...] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,

@@ -1,17 +1,23 @@
 <div align="center">
 
+<img src="https://raw.githubusercontent.com/wasintoh/line-oa-mcp-ultimate/main/docs/brand/logo-v21-tagline.png" alt="<OA/> MCP Ultimate 2.1 — MCP server for LINE Official Account" width="720">
+
 # LINE OA MCP Ultimate
 
 **Operate your LINE Official Account from any AI agent — through natural language.**
 
+[![CI](https://github.com/wasintoh/line-oa-mcp-ultimate/actions/workflows/test.yml/badge.svg)](https://github.com/wasintoh/line-oa-mcp-ultimate/actions/workflows/test.yml)
 [![npm version](https://img.shields.io/npm/v/line-oa-mcp-ultimate.svg)](https://www.npmjs.com/package/line-oa-mcp-ultimate)
+[![npm downloads](https://img.shields.io/npm/dm/line-oa-mcp-ultimate.svg)](https://www.npmjs.com/package/line-oa-mcp-ultimate)
+[![coverage](https://img.shields.io/badge/coverage-%E2%89%A580%25_enforced_in_CI-brightgreen.svg)](.github/workflows/test.yml)
+[![npm provenance](https://img.shields.io/badge/npm-provenance-blue.svg)](https://www.npmjs.com/package/line-oa-mcp-ultimate)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%E2%89%A520-brightgreen.svg)](#requirements)
 [![MCP](https://img.shields.io/badge/MCP-1.x-purple.svg)](https://modelcontextprotocol.io)
 
-[Quick Start](#quick-start) · [What you can do](#what-you-can-do) · [Configuration](#configuration) · [Documentation](#documentation)
+[Quick Start](#quick-start) · [What you can do](#what-you-can-do) · [Configuration](#configuration) · [Security](#-security) · [Documentation](#documentation)
 
-**🇹🇭 คู่มือภาษาไทย:** [เริ่มต้น 5 นาที](docs/quickstart-th.md) · [Messaging — 34 tools](docs/messaging-guide-th.md) · [LINE Shopping — 14 tools](docs/myshop-guide-th.md)
+**🇹🇭 คู่มือภาษาไทย:** [เริ่มต้น 5 นาที](docs/quickstart-th.md) · [Messaging — 35 tools](docs/messaging-guide-th.md) · [LINE Shopping — 14 tools](docs/myshop-guide-th.md)
 
 </div>
 
@@ -45,6 +51,25 @@ The MCP server takes care of LINE Messaging API calls, pre-flight validation, qu
 
 ---
 
+## 🆚 vs the official `@line/line-bot-mcp-server`
+
+LY Corporation publishes an official [LINE Bot MCP server](https://github.com/line/line-bot-mcp-server) (Apache-2.0, marked *preview*). It's a clean reference implementation, and ideas from it helped shape this project — if all you need is pushing a text or Flex message to one user from an agent, it may be enough. This project targets running a real OA (or an agency's worth of them) day to day:
+
+| | **`line-oa-mcp-ultimate`** (this project) | official `@line/line-bot-mcp-server` |
+|---|---|---|
+| Tools | **49** (35 messaging + 14 shopping) + 4 resources + 8 guided prompts | 12 (push/broadcast text & Flex, profile, quota read, rich-menu basics, follower IDs) |
+| LINE Shopping (MyShop) | ✅ 14 opt-in tools — products, stock, orders, parcel labels, settlements, checkout links | ❌ |
+| Multi-OA | ✅ one config file for all client OAs + runtime switch (`line_use_oa`) + fan-out (`line_run_on_many_oas`) | ❌ one OA per server instance |
+| Quota / quiet-hours guardrails | ✅ pre-flight Quota Guardian, 22:00–08:00 quiet-hours warnings, `dry_run` cost estimates | ➖ quota *read* tool (`get_message_quota`); no pre-flight guardrails |
+| Thai i18n | ✅ every user-facing error/warning in Thai, plus full Thai guides | ❌ English (Japanese README available) |
+| Rich-menu image generation | ✅ pure-JS satori + resvg (~10 MB, no browser), with a **preview-before-deploy** loop | ✅ Marp + Puppeteer (downloads headless Chromium), generate-and-upload in one shot |
+| Transports | stdio + Streamable HTTP with bearer-token auth (`MCP_HTTP_TOKEN`) | stdio (npx / Docker) |
+| Runtime footprint | browser-free — no headless Chromium download | depends on `puppeteer` + `@marp-team/marp-core` for rich-menu images |
+
+*Based on the official repo's README and package manifest as of 2026-07 — see their repo for the latest.*
+
+---
+
 ## Who is it for?
 
 - 🪐 **AI-first marketers** who run a LINE OA from their AI workspace.
@@ -58,13 +83,13 @@ The MCP server takes care of LINE Messaging API calls, pre-flight validation, qu
 
 ## What you can do
 
-**34 messaging tools + 14 LINE Shopping tools (v2.0, opt-in) + 4 resources + 7 guided prompts**, grouped by what you actually want to do:
+**35 messaging tools + 14 LINE Shopping tools (v2.0, opt-in) + 4 resources + 8 guided prompts**, grouped by what you actually want to do:
 
 ### 📨 Send messages (2 tools)
 One universal `send_message` covers every LINE transport (reply / push / multicast / narrowcast / broadcast). Three modes: `send_now`, `draft` (for scheduling via LINE OA Manager UI), and `dry_run` (validate + estimate cost without sending). Message shapes: text, Flex (template or raw JSON), sticker, **image**, **video**, **native LINE coupon** (`{ coupon_id }`), and a `message_json` passthrough for pre-built Rich/Card messages. Plus Thai-friendly sticker search.
 
-### 🎨 Rich Menus (8 tools)
-Build a rich menu in one call (create + upload image + set as default), list, delete, and diagnose "why doesn't this user see my menu?". Full lifecycle too: **link/unlink** a menu to specific users or in bulk (auto-chunked at 500), **set/clear** the account default, manage rich-menu **aliases** (tab-switching menus), and **swap the image** on an existing menu.
+### 🎨 Rich Menus (9 tools)
+Build a rich menu in one call (create + upload image + set as default), list, delete, and diagnose "why doesn't this user see my menu?". Full lifecycle too: **link/unlink** a menu to specific users or in bulk (auto-chunked at 500), **set/clear** the account default, manage rich-menu **aliases** (tab-switching menus), and **swap the image** on an existing menu. **New in v2.1 — Rich Menu Studio:** `line_design_rich_menu_image` generates the menu image itself (Thai-ready layout templates, pure-JS satori + resvg — no headless browser), lets you **preview before deploying**, then hands off to `line_build_rich_menu`.
 
 ### 💎 Message Design (3 tools)
 Design **Flex Messages** from 8 Thai-localized templates or raw JSON, build **Rich Messages** (`imagemap` — tappable image regions + optional video), and **Card Messages** (`template` — buttons / confirm / carousel / image_carousel). Each returns ready-to-send JSON you hand to `send_message`.
@@ -272,21 +297,34 @@ Every tool that uses an image — broadcast image, rich menu, card, imagemap, fl
 | Doc | What's in it |
 |---|---|
 | [docs/quickstart-th.md](docs/quickstart-th.md) | Thai-language quick start (5-minute walkthrough) |
-| [docs/messaging-guide-th.md](docs/messaging-guide-th.md) | 📨 **Messaging full guide — Thai.** All 34 tools explained, transports & send modes, real workflows, safety limits, and troubleshooting |
+| [docs/messaging-guide-th.md](docs/messaging-guide-th.md) | 📨 **Messaging full guide — Thai.** All 35 tools explained, transports & send modes, real workflows, safety limits, and troubleshooting |
 | [docs/myshop-guide-th.md](docs/myshop-guide-th.md) | 🛍️ **LINE Shopping (MyShop) full guide — Thai.** Get the API key, all 14 tools explained, real end-to-end workflows, safety rules, and troubleshooting |
 | [docs/clients-setup-th.md](docs/clients-setup-th.md) | Per-host MCP setup — Cowork / Claude Desktop / Cursor / Codex (Thai) |
 | [docs/multi-oa-setup-th.md](docs/multi-oa-setup-th.md) | Multi-OA configuration guide (Thai) |
 | [docs/cowork-local-test-th.md](docs/cowork-local-test-th.md) | Test a local build in Claude Cowork before publishing (Thai) |
 | [docs/http-transport.md](docs/http-transport.md) | Streamable HTTP transport for self-hosted / remote use |
+| [SECURITY.md](SECURITY.md) · [docs/security-th.md](docs/security-th.md) | Security policy (EN) · threat-model guide for shop owners (Thai) |
 | [examples/](examples/) | Runnable examples |
+
+---
+
+## 🔐 Security
+
+This server operates with **live channel access tokens** — whoever holds the token *is* your shop. Treat your MCP config like a password store.
+
+- **Report vulnerabilities privately** via GitHub Security Advisories — see [SECURITY.md](SECURITY.md) for scope, response times, and what to include. Please don't open public issues for security problems.
+- **Thai threat-model guide for shop owners:** [docs/security-th.md](docs/security-th.md) — what a leaked token can do, per-OA token isolation, and config-file permissions.
+- **HTTP transport requires auth beyond localhost:** binding to any non-loopback host (e.g. `0.0.0.0`) **requires `MCP_HTTP_TOKEN`** — every request must then carry `Authorization: Bearer <token>`. Without the token the server refuses to expose itself beyond `127.0.0.1`. Details in [docs/http-transport.md](docs/http-transport.md).
 
 ---
 
 ## Versioning
 
-This project follows [Semantic Versioning](https://semver.org/). Current release: **v2.0.0**.
+This project follows [Semantic Versioning](https://semver.org/). Current release: **v2.1.0 "Trust Release"** — full history in [CHANGELOG.md](CHANGELOG.md).
 
-Latest changes (v2.0.0): **+14 LINE Shopping tools** via the MyShop Open API — products, inventory, orders (incl. parcel labels), settlements, and checkout links. API-key only, no webhook/server, fully **opt-in** (registers only when a MyShop key is set) and **non-breaking** on the 34 messaging tools. See [RELEASE_NOTES_v2.0.0.md](RELEASE_NOTES_v2.0.0.md).
+Latest changes (v2.1.0): **Rich Menu Studio** (`line_design_rich_menu_image` — generate rich-menu images with no headless browser, preview before deploy), **HTTP bearer auth** (`MCP_HTTP_TOKEN`), a published security policy ([SECURITY.md](SECURITY.md)), CI/CD with npm **provenance**, and a much larger test suite with a coverage gate enforced in CI. See [CHANGELOG.md](CHANGELOG.md).
+
+Previously (v2.0.0): **+14 LINE Shopping tools** via the MyShop Open API — products, inventory, orders (incl. parcel labels), settlements, and checkout links. API-key only, no webhook/server, fully **opt-in** (registers only when a MyShop key is set) and **non-breaking** on the 34 messaging tools. See [RELEASE_NOTES_v2.0.0.md](RELEASE_NOTES_v2.0.0.md).
 
 Previously (v1.1.0): +10 tools completing LINE's token-only Messaging API surface (rich-menu lifecycle, Rich/Card message builders, audience update, webhook set/get, narrowcast progress, token check). See [RELEASE_NOTES_v1.1.0.md](RELEASE_NOTES_v1.1.0.md).
 
@@ -296,6 +334,7 @@ Previously (v1.1.0): +10 tools completing LINE's token-only Messaging API surfac
 
 - **v1.x** — Full token-only Messaging API coverage: outbound + rich-menu lifecycle + Rich/Card message builders + audiences + insights + coupons.
 - **v2.0** — ✅ **LINE Shopping (MyShop Open API)** shipped — products, inventory, orders, parcel labels, settlements, and checkout links (API-key only, no webhook). See [RELEASE_NOTES_v2.0.0.md](RELEASE_NOTES_v2.0.0.md).
+- **v2.1** — ✅ **"Trust Release"** shipped — Rich Menu Studio (image generation + preview), HTTP bearer auth, security policy + hardening, CI/CD with provenance, coverage-gated test suite. See [CHANGELOG.md](CHANGELOG.md).
 
 Future direction is guided by real-world usage and community feedback.
 
@@ -305,6 +344,16 @@ Future direction is guided by real-world usage and community feedback.
 
 PRs are welcome. Please open an issue first to discuss substantial changes.
 
+**The one rule: a new tool ships with new tests.** Every tool is exercised through a real in-memory MCP client with the LINE API mocked at the fetch boundary (see `tests/helpers/`) — no live token needed to run the suite.
+
+```bash
+npm ci
+npm run typecheck       # strict TypeScript, no `any`
+npm test                # vitest run
+npm run test:coverage   # coverage — ≥80% lines, enforced in CI
+npm run build
+```
+
 When contributing:
 
 - Tool names: `line_{action}_{resource}` (snake_case, prefix `line_`).
@@ -312,6 +361,15 @@ When contributing:
 - User-facing strings: Thai-friendly (centralized in `src/i18n/th.ts`).
 - Pre-flight validation on every send tool.
 - Quota Guardian + Quiet Hours on every consumption tool.
+- **Backward compatibility is non-negotiable** — never rename or remove existing tools, params, response fields, env vars, or config keys.
+
+PR expectations: CI must be green ([test workflow](.github/workflows/test.yml) — typecheck, tests with coverage, build on Node 20 & 22), and behavior changes come with a matching `CHANGELOG.md` line under *Unreleased*.
+
+### Releasing (maintainers)
+
+1. Move the *Unreleased* section of [CHANGELOG.md](CHANGELOG.md) to the new version and bump `package.json`.
+2. `git tag vX.Y.Z && git push origin vX.Y.Z`.
+3. The [release workflow](.github/workflows/release.yml) runs the full gate (typecheck + tests + build), publishes to npm with **`--provenance`**, and creates a GitHub Release from the matching CHANGELOG section. It needs one repo secret: **`NPM_TOKEN`** (npm granular access token with publish rights on this package).
 
 ---
 

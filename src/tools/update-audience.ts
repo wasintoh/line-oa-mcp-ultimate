@@ -50,28 +50,11 @@ export function registerUpdateAudienceTool(server: McpServer): void {
     "line_update_audience",
     {
       title: "Update LINE Audience",
-      description: `Mutate an existing LINE audience group (upload type). Two modes.
+      description: `Mutate an existing LINE audience group. modes: add_users (append user_ids) | rename (set description). audience_group_id from line_list_audiences. Only Messaging-API-created (upload) audiences accept mutation — audiences built in LINE OA Manager UI (chat-tag, friend-path, web-traffic) are read-only and LINE will reject changes.
 
-Only Messaging-API-created (upload) audiences accept add_users. Audiences built in LINE OA Manager UI (chat-tag, friend-path, web-traffic) are read-only here and LINE will reject mutation.
+Returns add_users → { mode, audience_group_id, added_count }; rename → { mode, audience_group_id, new_description }.
 
-Args:
-  - mode ('add_users' | 'rename'): what to change.
-  - audience_group_id (number): target audience id (from line_list_audiences).
-  - user_ids (string[], add_users only): LINE user IDs to append.
-  - description (string, rename only): the new audience name.
-  - oa (string, optional): OA id. Default = active OA.
-
-Returns:
-  - add_users → { mode, audience_group_id, added_count }
-  - rename    → { mode, audience_group_id, new_description }
-
-Examples:
-  - "เพิ่ม 3 คนเข้า audience 12345" → { mode: "add_users", audience_group_id: 12345, user_ids: ["U1...", "U2...", "U3..."] }
-  - "เปลี่ยนชื่อ audience 12345 เป็น VIP มิ.ย." → { mode: "rename", audience_group_id: 12345, description: "VIP มิ.ย." }
-
-Errors:
-  - Missing user_ids for add_users / missing description for rename → inline input error.
-  - LINE rejects mutation on non-upload audiences (e.g. chat-tag) → LineApiError surfaced.`,
+Example: "เพิ่ม 3 คนเข้า audience 12345" → { mode:"add_users", audience_group_id:12345, user_ids:["U1","U2","U3"] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,

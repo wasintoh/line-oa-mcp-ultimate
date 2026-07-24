@@ -14,6 +14,7 @@ import { z } from "zod";
 
 import { resolveOa } from "../config/multi-oa.js";
 import { LineApiError, LineClient } from "../line/client.js";
+import { SsrfBlockedError, fetchPublicImage } from "../line/ssrf-guard.js";
 import { RICH_MENU_IMAGE_MAX_BYTES } from "../constants.js";
 import { TH } from "../i18n/th.js";
 
@@ -36,32 +37,11 @@ export function registerUploadRichMenuImageTool(server: McpServer): void {
     "line_upload_rich_menu_image",
     {
       title: "Upload / replace a LINE rich menu image",
-      description: `Replace the image on an EXISTING rich menu without recreating it — the richMenuId, tappable areas, and any per-user links are preserved. Downloads the image from a public HTTPS URL, validates format + size, then uploads to the api-data.line.me content endpoint (the domain switch that trips up most implementations).
+      description: `Replace the image on an EXISTING rich menu without recreating it — richMenuId, tappable areas, and per-user links are preserved. Downloads from a public HTTPS URL, validates JPEG/PNG ≤1MB, then uploads to the api-data.line.me content endpoint (the domain switch that trips up most implementations). Private/internal addresses are blocked by an SSRF guard.
 
-Args:
-  - rich_menu_id: ID of the existing rich menu to update.
-  - image_url: Public HTTPS URL of the new image. JPEG/PNG, ≤1MB.
-  - oa: Optional OA id.
+Returns { rich_menu_id, uploaded, bytes }.
 
-Returns:
-  {
-    rich_menu_id: string,
-    uploaded: true,
-    bytes: number   // size of the uploaded image
-  }
-
-Image requirements (validated client-side before upload):
-  - Format: JPEG or PNG
-  - File size: ≤1MB
-
-Examples:
-  - "เปลี่ยนรูป rich menu R123 เป็นแบนเนอร์ใหม่" → { rich_menu_id: "R123", image_url: "https://.../banner.png" }
-
-Errors:
-  - image_url not reachable → returns download error
-  - unsupported format → returns format error
-  - IMAGE_TOO_LARGE → ≥1MB; compress and retry
-  - 404 → rich_menu_id not found`,
+Example: "เปลี่ยนรูป rich menu R123" → { rich_menu_id:"R123", image_url:"https://.../banner.png" }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,
@@ -76,20 +56,10 @@ Errors:
         const { config } = resolveOa(params.oa);
         const client = new LineClient({ channelAccessToken: config.channel_access_token });
 
-        // Download image bytes (we only have a URL)
-        const imageRes = await fetch(params.image_url);
-        if (!imageRes.ok) {
-          return {
-            isError: true,
-            content: [
-              {
-                type: "text",
-                text: `❌ ดาวน์โหลด image_url ไม่ได้ (HTTP ${imageRes.status}). ตรวจสอบ URL public + format`,
-              },
-            ],
-          };
-        }
-        const contentType = imageRes.headers.get("content-type") ?? "image/jpeg";
+        // Download image bytes through the SSRF guard (https only, no
+        // private/internal targets, redirect hops re-validated, size-capped).
+        const downloaded = await fetchPublicImage(params.image_url);
+        const contentType = downloaded.contentType;
         if (
           !contentType.includes("png") &&
           !contentType.includes("jpeg") &&
@@ -102,7 +72,7 @@ Errors:
             ],
           };
         }
-        const imageBuf = Buffer.from(await imageRes.arrayBuffer());
+        const imageBuf = downloaded.buffer;
         if (imageBuf.length > RICH_MENU_IMAGE_MAX_BYTES) {
           return {
             isError: true,
@@ -140,6 +110,10 @@ Errors:
 }
 
 function errorReply(err: unknown): { content: { type: "text"; text: string }[]; isError: true } {
+  if (err instanceof SsrfBlockedError) {
+    // Already a Thai, user-facing message (download failed / blocked target / too large).
+    return { isError: true, content: [{ type: "text", text: err.message }] };
+  }
   if (err instanceof LineApiError) {
     const detail = err.details.length
       ? `${err.message}\n${err.details.map((d) => `  • ${d}`).join("\n")}`

@@ -23,16 +23,9 @@ export function registerListOasTool(server: McpServer): void {
     "line_list_oas",
     {
       title: "List LINE OAs configured",
-      description: `List all LINE Official Accounts available to this MCP instance, from the multi-OA config file (or single-OA env mode). Useful before line_use_oa to discover the OA IDs.
+      description: `List all LINE Official Accounts available to this MCP instance (from the multi-OA config file, or single-OA env mode). Call before line_use_oa to discover OA IDs.
 
-Args:
-  - response_format: 'markdown' (default) | 'json'.
-
-Returns:
-  {
-    active_oa: string,
-    oas: [{ id, display_name?, region?, is_premium?, is_active }]
-  }`,
+Returns { active_oa, oas:[{ id, display_name?, region?, is_premium?, is_active }] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

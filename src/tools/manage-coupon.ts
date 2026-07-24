@@ -222,43 +222,18 @@ const InputSchema = z
   })
   .strict();
 
-type Input = z.infer<typeof InputSchema>;
+type _Input = z.infer<typeof InputSchema>; // kept for doc purposes
 
 export function registerManageCouponTool(server: McpServer): void {
   server.registerTool(
     "line_manage_coupon",
     {
       title: "Manage LINE OA coupons",
-      description: `Coupon CRUD on a LINE OA (POST /v2/bot/coupon). Four modes:
+      description: `Coupon CRUD on a LINE OA (POST /v2/bot/coupon). modes: create (maps friendly inputs to LINE's schema — dates to UNIX seconds, visibility, etc.), list, get (by coupon_id), discontinue (ends a live coupon; irreversible — requires confirm=true). Deliver a created coupon via line_send_message message.coupon_id. Rate limit: shared 200 req/sec bucket with multicast.
 
-  - create: Make a new coupon. Maps friendly inputs to LINE's required schema
-            (reward, acquisitionCondition, startTimestamp/endTimestamp in UNIX
-            seconds, timezone, visibility, maxUseCountPerTicket).
-  - list: List all coupons.
-  - get: Fetch a specific coupon by coupon_id.
-  - discontinue: End a live coupon (irreversible — requires confirm=true).
+create data: title (≤60, required); discount_type 'percentage'(default)|'fixed'|'explicit' with discount_value (or price_before/price_after for explicit); valid_from/valid_to accept UNIX seconds | 'YYYY-MM-DD' | ISO; visibility PUBLIC|UNLISTED (default UNLISTED); acquisition_type normal|lottery.
 
-Rate limit: shared bucket 200 req/sec with multicast.
-
-create data fields:
-  - title (required, ≤60)
-  - discount_type: 'percentage' (default) | 'fixed' | 'explicit'
-  - discount_value: % (percentage) or amount (fixed)
-  - price_before / price_after: for discount_type='explicit'
-  - valid_from / valid_to (required): UNIX seconds | 'YYYY-MM-DD' | ISO datetime
-  - timezone: default 'ASIA_BANGKOK'
-  - visibility: 'PUBLIC' | 'UNLISTED' (default UNLISTED)
-  - max_use_per_ticket: 1 (default) | -1 (unlimited)
-  - acquisition_type: 'normal' (default) | 'lottery' (+lottery_probability)
-  - description, image_url, coupon_code, barcode_image_url (optional)
-
-Examples:
-  - "Early Bird ลด 20% 1–8 มิ.ย." →
-      { mode: "create", data: { title: "Early Bird คอร์สจารโต", discount_type: "percentage", discount_value: 20, valid_from: "2026-06-01", valid_to: "2026-06-08", coupon_code: "EARLYBIRD" } }
-  - "คูปองลด 100 บาท" →
-      { mode: "create", data: { title: "ลด 100", discount_type: "fixed", discount_value: 100, valid_from: "2026-06-01", valid_to: "2026-06-30" } }
-  - "ดู coupons ทั้งหมด" → { mode: "list" }
-  - "ปิด coupon C123" → { mode: "discontinue", coupon_id: "C123", confirm: true }`,
+Example: "Early Bird ลด 20% 1–8 มิ.ย." → { mode:"create", data:{ title:"Early Bird", discount_type:"percentage", discount_value:20, valid_from:"2026-06-01", valid_to:"2026-06-08", coupon_code:"EARLYBIRD" } }. "ปิด coupon C123" → { mode:"discontinue", coupon_id:"C123", confirm:true }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,

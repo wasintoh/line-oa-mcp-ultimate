@@ -52,35 +52,11 @@ export function registerLinkRichMenuTool(server: McpServer): void {
     "line_link_rich_menu",
     {
       title: "Link / unlink a LINE rich menu to user(s)",
-      description: `Attach or detach a rich menu for specific LINE users. A per-user menu overrides the account-wide default, so this is the way to show different menus to different segments (e.g. paying members vs. free users).
+      description: `Attach (mode='link') or detach (mode='unlink') a rich menu for specific LINE users. A per-user menu overrides the account-wide default — this is how you show different menus to different segments (e.g. paying vs. free). Unlinking falls the user back to the account default. Pass user_id (single) or user_ids[] (bulk, auto-chunked at 500/batch). rich_menu_id required for link. To set the account-wide default instead, use line_set_default_rich_menu.
 
-Pass a single user_id (per-user endpoint) or a list of user_ids (bulk endpoint, auto-chunked into batches of 500). Unlinking a user makes them fall back to the account default menu (if any).
+Returns { mode, linked_count?/unlinked_count?, rich_menu_id?, chunks? }.
 
-Args:
-  - mode: 'link' (attach) | 'unlink' (detach).
-  - rich_menu_id: Required for mode='link'; ignored for unlink.
-  - user_id: A single LINE user ID, OR
-  - user_ids: A list of LINE user IDs (bulk, auto-chunked at 500/batch).
-  - oa: Optional OA id.
-
-Returns:
-  {
-    mode: "link" | "unlink",
-    linked_count?: number,   // present when mode='link'
-    unlinked_count?: number, // present when mode='unlink'
-    rich_menu_id?: string,   // present when mode='link'
-    chunks?: number          // number of bulk batches sent (bulk path only)
-  }
-
-Examples:
-  - "ผูก rich menu R123 ให้ user U1" → { mode: "link", rich_menu_id: "R123", user_id: "U1" }
-  - "ผูก rich menu R123 ให้สมาชิก 800 คน" → { mode: "link", rich_menu_id: "R123", user_ids: [...800 ids] } (sent as 2 chunks)
-  - "ถอด rich menu ของ user U1" → { mode: "unlink", user_id: "U1" }
-
-Errors:
-  - mode='link' without rich_menu_id → returns input error
-  - neither user_id nor user_ids → returns input error
-  - 404 → user has no rich menu linked (unlink), or rich_menu_id not found (link)`,
+Example: "ผูก rich menu R123 ให้สมาชิก 800 คน" → { mode:"link", rich_menu_id:"R123", user_ids:[...800 ids] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,

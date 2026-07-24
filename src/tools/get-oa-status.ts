@@ -36,30 +36,9 @@ export function registerGetOaStatusTool(server: McpServer): void {
     "line_get_oa_status",
     {
       title: "Get LINE OA Status",
-      description: `Quick health check of a LINE Official Account: friend count, monthly quota usage, webhook status, and current default rich menu. Aggregates 4 LINE API calls into one card.
+      description: `Quick health check of a LINE OA — friend count, monthly quota usage, webhook status, and current default rich menu, aggregating 4 LINE API calls into one card. Good as the first call of a session: current quota and webhook state inform every later decision (send, schedule, switch OA).
 
-Use this as the first call of a session — every other tool decision (whether to send, schedule, switch OA, etc.) benefits from knowing current quota and webhook state.
-
-Args:
-  - oa (string, optional): OA id from multi-OA config. Default = active OA.
-  - response_format ('markdown' | 'json'): Output format. Default 'markdown'.
-
-Returns:
-  Structured object:
-  {
-    oa: { id, display_name, picture_url? },
-    friends?: number,         // omitted if not retrievable
-    quota: { used, total, remaining, percentage_used },
-    webhook: { active, url? },
-    default_rich_menu?: { id, name? },
-    region?: string,
-    health: 'OK' | 'WARNING' | 'ERROR',
-    warnings: string[]
-  }
-
-Examples:
-  - "ดูสถานะ OA หน่อย" → call with no args
-  - "Status ของ Client A" → { oa: "client_a" }`,
+Returns { oa, friends?, quota, webhook, default_rich_menu?, region?, health:'OK'|'WARNING'|'ERROR', warnings[] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

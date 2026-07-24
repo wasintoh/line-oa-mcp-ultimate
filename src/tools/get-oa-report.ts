@@ -64,33 +64,9 @@ export function registerGetOaReportTool(server: McpServer): void {
     "line_get_oa_report",
     {
       title: "Get LINE OA Report (multi-day digest)",
-      description: `Generate a digest of LINE OA performance over a date range. Bundles 8+ Insight API calls into a single Thai-friendly markdown report.
+      description: `Digest of LINE OA performance over a date range — bundles 8+ Insight API calls into one Thai-friendly markdown report. range: a preset ('today'|'yesterday'|'this-week'|'last-week'|'this-month'|'last-month', default 'last-week') or { from, to } as YYYY-MM-DD. LINE insight data lags T-2 (yesterday is the latest reliable date) and is masked below the ~20-user privacy floor; demographics populate only with enough consented friends (report surfaces these in notes).
 
-Args:
-  - range: One of 'today' | 'yesterday' | 'this-week' | 'last-week' | 'this-month' | 'last-month',
-           or { from: "YYYY-MM-DD", to: "YYYY-MM-DD" }. Default 'last-week'.
-  - oa: optional OA id.
-  - response_format: 'markdown' (default) | 'json'.
-
-Returns (structured):
-  {
-    oa_id, range: { from, to, preset? },
-    delivery: { total, daily: [{ date, broadcast, multicast, push, reply, total }] },
-    followers: { latest_count?, follow?, unfollow?, net_gain? },
-    demographic_available: boolean,
-    quota: { used, total, percentage_used },
-    notes: string[]      // T-2 data lag note, privacy-floor note, etc.
-  }
-
-Notes:
-  - LINE insight data has a T-2 lag (yesterday is the latest reliable date).
-  - Insight is masked below the ~20-user privacy floor; report surfaces this.
-  - Demographic only populated when the OA has enough consented friends.
-
-Examples:
-  - "สรุปสัปดาห์ที่แล้ว" → range: 'last-week'
-  - "ดูข้อมูลเดือนนี้" → range: 'this-month'
-  - "วิเคราะห์ 1-15 พ.ค." → range: { from: '2026-05-01', to: '2026-05-15' }`,
+Returns { oa_id, range, delivery{total,daily[]}, followers, demographic_available, quota, notes[] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

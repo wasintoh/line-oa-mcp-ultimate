@@ -30,31 +30,9 @@ export function registerTestWebhookTool(server: McpServer): void {
     "line_test_webhook",
     {
       title: "Test LINE Webhook Endpoint",
-      description: `Ping the OA's webhook URL from LINE servers and report HTTP status + latency. LINE checks that the endpoint returns 200 within their timeout AND that signature verification works (when secret is configured).
+      description: `Ping the OA's webhook URL from LINE servers and report HTTP status + latency; LINE checks it returns 200 within timeout and that signature verification works. Use this FIRST whenever a bot stops responding, before debugging anything else. Pass override_endpoint to test a URL other than the configured one. reason surfaces LINE's result: INVALID_REPLY | UNAUTHORIZED (bad channel_secret signature) | SERVER_ERROR (5xx) | TIMEOUT (>10s) | SSL_ERROR.
 
-Args:
-  - override_endpoint: optional public HTTPS URL to test instead of the configured one.
-  - oa: optional OA id.
-
-Returns:
-  {
-    success: boolean,
-    status_code: number,
-    latency_ms?: number,
-    reason: string,         // LINE's human-readable result
-    detail?: string,
-    configured_endpoint?: string,
-    tested_endpoint: string
-  }
-
-Common failure modes (LINE returns them via 'reason'):
-  - INVALID_REPLY: webhook responded but the response shape is unexpected
-  - UNAUTHORIZED: signature verification failed (your code uses wrong channel_secret)
-  - SERVER_ERROR: webhook returned 5xx
-  - TIMEOUT: webhook took >10s
-  - SSL_ERROR: HTTPS cert problem
-
-Use this whenever a bot stops responding before debugging anything else.`,
+Returns { success, status_code, latency_ms?, reason, configured_endpoint?, tested_endpoint }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false, // technically performs a side-effect ping

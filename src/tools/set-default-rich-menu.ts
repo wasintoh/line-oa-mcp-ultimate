@@ -30,26 +30,9 @@ export function registerSetDefaultRichMenuTool(server: McpServer): void {
     "line_set_default_rich_menu",
     {
       title: "Set / clear the account-wide default LINE rich menu",
-      description: `Set or clear the OA's default rich menu. The default menu shows to every follower who does not have a per-user menu linked (per-user links override the default).
+      description: `Set or clear the OA's default rich menu — shown to every follower without a per-user menu linked (per-user links via line_link_rich_menu override it). mode 'set' (needs rich_menu_id) or 'clear'.
 
-Args:
-  - mode: 'set' (assign a default) | 'clear' (remove the default).
-  - rich_menu_id: Required for mode='set'; ignored for clear.
-  - oa: Optional OA id.
-
-Returns:
-  {
-    mode: "set" | "clear",
-    rich_menu_id?: string   // present when mode='set'
-  }
-
-Examples:
-  - "ตั้ง rich menu R123 เป็น default" → { mode: "set", rich_menu_id: "R123" }
-  - "ลบ default rich menu" → { mode: "clear" }
-
-Errors:
-  - mode='set' without rich_menu_id → returns input error
-  - 404 → rich_menu_id not found (set), or no default set (clear)`,
+Returns { mode, rich_menu_id? }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,

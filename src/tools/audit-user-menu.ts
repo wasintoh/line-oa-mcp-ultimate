@@ -25,25 +25,9 @@ export function registerAuditUserMenuTool(server: McpServer): void {
     "line_audit_user_menu",
     {
       title: "Audit user's LINE Rich Menu",
-      description: `Why is user X seeing menu Y? This tool inspects the rich-menu priority chain for a user:
+      description: `Diagnose "why is user X seeing menu Y?" — inspects the rich-menu priority chain: a per-user link (line_link_rich_menu) overrides the account-wide default, and LINE OA Manager-built menus silently override API-built ones. Pass user_id.
 
-  1. Per-user link (line_link_rich_menu_to_user) — overrides everything
-  2. Account-wide default
-  3. (LINE OA Manager built menus override API-built ones — silent gotcha!)
-
-Args:
-  - user_id: LINE user ID.
-  - oa: optional OA id.
-
-Returns:
-  {
-    user_id,
-    visible_rich_menu_id?: string,
-    source: 'per_user' | 'default' | 'none',
-    per_user_link?: string,
-    default_id?: string,
-    explanation: string  // Thai-language explanation
-  }`,
+Returns { user_id, visible_rich_menu_id?, source:'per_user'|'default'|'none', per_user_link?, default_id?, explanation (Thai) }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

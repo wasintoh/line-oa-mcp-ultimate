@@ -73,28 +73,9 @@ export function registerGetMessageStatsTool(server: McpServer): void {
     "line_get_message_stats",
     {
       title: "Get LINE message engagement stats",
-      description: `Fetch per-broadcast engagement stats for a specific request_id: impressions, opens, clicks, CTR, and per-URL click breakdown.
+      description: `Fetch per-broadcast engagement for a request_id (from a prior line_send_message): impressions, opens, clicks, CTR, and per-URL click breakdown. Caveats (in notes): ~24h data lag (stats stabilize ~T+1); below ~20 unique users LINE returns null for privacy; available only for narrowcast/multicast/broadcast, not reply or push-to-single-user.
 
-Args:
-  - request_id: From a prior line_send_message return value.
-  - oa: optional OA id.
-  - response_format: 'markdown' (default) | 'json'.
-
-Returns (structured):
-  {
-    request_id,
-    delivered?: number,
-    unique_impression?: number,    // null if below ~20-user privacy floor
-    unique_click?: number,
-    ctr_percent?: number,
-    per_url_clicks: [{ url, click, unique_click }],
-    notes: string[]                // T-1 lag note, privacy-floor note
-  }
-
-Important caveats (surfaced in notes):
-  - 24-hour data lag — stats stabilize ~T+1 after send.
-  - Below ~20 unique users, LINE returns null for privacy.
-  - Available only for narrowcast / multicast / broadcast (not reply / push to single user).`,
+Returns { request_id, delivered?, unique_impression?, unique_click?, ctr_percent?, per_url_clicks[], notes[] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

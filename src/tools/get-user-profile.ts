@@ -29,17 +29,9 @@ export function registerGetUserProfileTool(server: McpServer): void {
     "line_get_user_profile",
     {
       title: "Get LINE User Profile",
-      description: `Fetch a LINE user's profile (display name, picture, status message, language) by user ID.
+      description: `Fetch a LINE user's profile (display name, picture, status message, language) by user_id. Only works if the user has added the bot, has not blocked it, and consented to share profile — any failure returns an ambiguous 404, surfaced as a clear Thai explanation.
 
-Note: Only works if the user has added the bot as a friend AND has not blocked it AND has consented to share profile (per LINE TOS). Returns 404 ambiguously if any of these conditions fail — we surface a clear Thai-language explanation.
-
-Args:
-  - user_id: LINE user ID (typically starts with 'U').
-  - oa: optional OA id.
-  - response_format: 'markdown' (default) | 'json'.
-
-Returns:
-  { user_id, display_name, picture_url?, status_message?, language? }`,
+Returns { user_id, display_name, picture_url?, status_message?, language? }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

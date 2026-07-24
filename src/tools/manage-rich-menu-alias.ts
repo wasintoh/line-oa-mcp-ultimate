@@ -41,35 +41,11 @@ export function registerManageRichMenuAliasTool(server: McpServer): void {
     "line_manage_rich_menu_alias",
     {
       title: "Manage LINE rich menu aliases (tab switching)",
-      description: `Rich menu alias CRUD. Aliases power tab-switching rich menus: a 'richmenuswitch' action references a richMenuAliasId, and repointing that alias at a different rich menu swaps the displayed panel instantly — no per-user re-linking. Five modes:
+      description: `Rich menu alias CRUD. Aliases power tab-switching rich menus: a 'richmenuswitch' action references a richMenuAliasId, and repointing that alias at a different rich menu swaps the displayed panel instantly — no per-user re-linking. modes: create (bind alias_id→rich_menu_id), update (repoint), delete (removes alias, not the underlying menu), get, list. alias_id required except for list; rich_menu_id required for create/update.
 
-  - create: Bind a new alias_id to a rich_menu_id.
-  - update: Repoint an existing alias to a different rich_menu_id.
-  - delete: Remove an alias (does not delete the underlying rich menu).
-  - get: Fetch a single alias by alias_id.
-  - list: List all aliases on the OA.
+Returns create/update/delete → { mode, alias_id, rich_menu_id? }; get → { richMenuAliasId, richMenuId }; list → { aliases[] }.
 
-Args:
-  - mode: 'create' | 'update' | 'delete' | 'get' | 'list'.
-  - alias_id: Required for all modes except 'list'.
-  - rich_menu_id: Required for 'create' and 'update'.
-  - oa: Optional OA id.
-
-Returns:
-  - create/update/delete → { mode, alias_id, rich_menu_id? }
-  - get → { richMenuAliasId, richMenuId }
-  - list → { aliases: { richMenuAliasId, richMenuId }[] }
-
-Examples:
-  - "สร้าง alias tab-a ชี้ไป R123" → { mode: "create", alias_id: "tab-a", rich_menu_id: "R123" }
-  - "เปลี่ยน alias tab-a ไปที่ R456" → { mode: "update", alias_id: "tab-a", rich_menu_id: "R456" }
-  - "ดู alias ทั้งหมด" → { mode: "list" }
-  - "ลบ alias tab-a" → { mode: "delete", alias_id: "tab-a" }
-
-Errors:
-  - missing alias_id (non-list modes) / missing rich_menu_id (create/update) → returns input error
-  - 400 → alias_id already exists (create)
-  - 404 → alias not found (update/delete/get)`,
+Example: "เปลี่ยน alias tab-a ไปที่ R456" → { mode:"update", alias_id:"tab-a", rich_menu_id:"R456" }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,

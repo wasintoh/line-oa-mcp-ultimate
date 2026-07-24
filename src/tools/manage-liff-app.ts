@@ -50,31 +50,16 @@ const InputSchema = z
   })
   .strict();
 
-type Input = z.infer<typeof InputSchema>;
+type _Input = z.infer<typeof InputSchema>; // kept for doc purposes
 
 export function registerManageLiffAppTool(server: McpServer): void {
   server.registerTool(
     "line_manage_liff_app",
     {
       title: "Manage LIFF apps",
-      description: `LIFF lifecycle CRUD. Four modes:
-  - create: New LIFF app. Requires config.view (type + url).
-  - list: List all LIFF apps on the channel.
-  - update: Modify an existing LIFF app. Requires liff_id + partial config.
-  - delete: Remove a LIFF app. Requires liff_id + confirm=true.
+      description: `LIFF app lifecycle CRUD. modes: create (needs config.view {type,url}), list, update (liff_id + partial config), delete (liff_id + confirm=true). Auth note: LIFF Server API uses LINE Login channel tokens; this uses the same Messaging API token — for separate-channel setups see docs.
 
-Args:
-  - mode: 'create' | 'list' | 'update' | 'delete'.
-  - liff_id: required for update / delete.
-  - config: full for create, partial for update.
-  - confirm: required true for delete.
-  - oa: optional OA id.
-
-Auth note: LIFF Server API uses LINE Login channel tokens — V1 uses the same Messaging API token for simplicity. For separate-channel setups, see docs.
-
-Examples:
-  - "สร้าง LIFF tall https://my.app" → { mode: "create", config: { view: { type: "tall", url: "https://my.app" } } }
-  - "ดู LIFF apps ทั้งหมด" → { mode: "list" }`,
+Example: "สร้าง LIFF tall https://my.app" → { mode:"create", config:{ view:{ type:"tall", url:"https://my.app" } } }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,

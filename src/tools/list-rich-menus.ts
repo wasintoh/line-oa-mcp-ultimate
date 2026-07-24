@@ -25,20 +25,9 @@ export function registerListRichMenusTool(server: McpServer): void {
     "line_list_rich_menus",
     {
       title: "List LINE Rich Menus",
-      description: `List all rich menus on an OA + identify which one is the account-wide default. OAs can hold up to 1,000 rich menus — use line_delete_rich_menu to clean up.
+      description: `List all rich menus on an OA and identify the account-wide default. OAs hold up to 1,000 rich menus — run this before line_build_rich_menu to avoid the cap, and line_delete_rich_menu to clean up.
 
-Args:
-  - oa: optional OA id.
-  - response_format: 'markdown' (default) | 'json'.
-
-Returns:
-  {
-    total: number,
-    default_id?: string,
-    rich_menus: [{ rich_menu_id, name, chat_bar_text?, size?, is_default, is_selected }]
-  }
-
-Use this before line_build_rich_menu to avoid hitting the 1,000-menu cap.`,
+Returns { total, default_id?, rich_menus:[{ rich_menu_id, name, chat_bar_text?, size?, is_default, is_selected }] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

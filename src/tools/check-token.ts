@@ -37,27 +37,9 @@ export function registerCheckTokenTool(server: McpServer): void {
     "line_check_token",
     {
       title: "Check LINE Token Validity",
-      description: `Verify the active OA's configured channel access token (GET /oauth2/v2.1/verify). Reports the bound client_id, remaining lifetime, and granted scope. Run before a campaign — a token expiring mid-send fails silently.
+      description: `Verify the active OA's channel access token (GET /oauth2/v2.1/verify) — reports bound client_id, remaining lifetime, and granted scope; warns (Thai) when <7 days remain. Run before a campaign: a token expiring mid-send fails silently. An invalid/expired token surfaces a 401 error (no { valid:false } shape).
 
-Args:
-  - oa (string, optional): OA id whose configured token to verify. Default = active OA.
-
-Returns:
-  {
-    valid: true,
-    client_id: string,
-    expires_in_seconds: number,
-    expires_in_days: number,
-    scope?: string,
-    warning?: string          // set (Thai) when < 7 days remain
-  }
-
-Examples:
-  - "token ยังใช้ได้ไหม" → call with no args
-  - "เช็ค token ของ client_a" → { oa: "client_a" }
-
-Errors:
-  - Invalid / expired token → LineApiError (401) surfaced (no { valid: false } shape — an error is returned instead).`,
+Returns { valid, client_id, expires_in_seconds, expires_in_days, scope?, warning? }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

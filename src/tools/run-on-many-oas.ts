@@ -52,34 +52,21 @@ const InputSchema = z
   })
   .strict();
 
-type Input = z.infer<typeof InputSchema>;
+type _Input = z.infer<typeof InputSchema>; // kept for doc purposes
 
 export function registerRunOnManyOasTool(server: McpServer): void {
   server.registerTool(
     "line_run_on_many_oas",
     {
       title: "Run a tool across many LINE OAs",
-      description: `Agency feature — run any read-only line_* tool across many OAs in parallel. Errors on individual OAs are isolated (one bad token doesn't break the whole run).
+      description: `Agency feature — run any read-only line_* tool across many OAs in parallel; per-OA errors are isolated (one bad token doesn't break the run). tool must be one of the supported read-only tools below; oa_ids an array or 'all' (default); parallel concurrency 1-10 (default 5).
 
-Supported tools (read-only only for V1 safety):
+Supported tools:
   ${SUPPORTED_TOOLS.map((t) => `- ${t}`).join("\n  ")}
 
-Args:
-  - tool: One of the supported tool names.
-  - oa_ids: Array of OA ids, or 'all' (default).
-  - parallel: Max concurrency 1-10 (default 5).
-  - response_format: 'markdown' (default) | 'json'.
+Returns { tool, count_ok, count_failed, results[], errors[] }.
 
-Returns:
-  {
-    tool, count_ok, count_failed,
-    results: [{ oa_id, oa_name, success, summary }],
-    errors: [{ oa_id, error }]
-  }
-
-Examples:
-  - "เช็คสถานะทุก OA" → { tool: "line_get_oa_status", oa_ids: "all" }
-  - "ทดสอบ webhook ทุก client" → { tool: "line_test_webhook" }`,
+Example: "เช็คสถานะทุก OA" → { tool:"line_get_oa_status", oa_ids:"all" }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

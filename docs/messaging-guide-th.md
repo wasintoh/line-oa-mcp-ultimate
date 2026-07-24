@@ -1,4 +1,4 @@
-# คู่มือ LINE Messaging (34 tools) ภาษาไทย
+# คู่มือ LINE Messaging (35 tools) ภาษาไทย
 
 > สั่งงาน LINE Official Account ด้วย "ภาษาคน" ผ่าน AI — ส่ง broadcast, ออกแบบ Flex, สร้าง rich menu, ทำ audience, ดู insight, จัดการคูปอง โดยไม่ต้องเปิดหน้าเว็บ LINE OA Manager หรือเขียนโค้ดเลย
 
@@ -63,7 +63,8 @@ Quiet Hours — ถ้าเป็นช่วง 22:00–08:00 (เวลาไ
 |---|---|---|
 | 📨 **ส่งข้อความ (2)** | `line_send_message` | ส่งข้อความทุกแบบ ทุกช่องทาง |
 | | `line_find_sticker` | ค้นสติกเกอร์ตามอารมณ์ |
-| 🎨 **Rich Menu (8)** | `line_build_rich_menu` | สร้างเมนูปุ่มจบในคำสั่งเดียว |
+| 🎨 **Rich Menu (9)** | `line_design_rich_menu_image` | 🆕 v2.1 — วาดภาพเมนูให้เองด้วยฟอนต์ไทย (LINE Seed/Prompt/Noto) preview ก่อน deploy ไม่ต้องมีดีไซเนอร์ — ดู [Rich Menu Studio](rich-menu-studio-th.md) |
+| | `line_build_rich_menu` | สร้างเมนูปุ่มจบในคำสั่งเดียว (มีรูปอยู่แล้ว) |
 | | `line_list_rich_menus` | ดูเมนูทั้งหมด |
 | | `line_delete_rich_menu` | ลบเมนู (ต้องยืนยัน) |
 | | `line_audit_user_menu` | เช็กว่าผู้ใช้คนนี้เห็นเมนูไหน |

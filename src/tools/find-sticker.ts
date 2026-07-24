@@ -31,24 +31,9 @@ export function registerFindStickerTool(server: McpServer): void {
     "line_find_sticker",
     {
       title: "Find LINE sticker by mood/keyword",
-      description: `Find LINE stickers from a curated catalog by mood or keyword. Both Thai and English search terms are supported.
+      description: `Find LINE stickers from a curated catalog by mood or keyword (Thai or English). Bots may only send stickers from LINE's limited official list, so this picks by intent ("celebration", "ขอบคุณ", "sorry") instead of guessing IDs. Pass the chosen package_id + sticker_id to line_send_message via message.sticker.
 
-LINE only allows bots to send stickers from a limited official list. This tool lets agents pick stickers by intent ("celebration", "ขอบคุณ", "sorry") rather than guessing IDs.
-
-Args:
-  - query: Mood or keyword. Examples: "ขอบคุณ", "celebration", "sorry", "love".
-  - limit: Number of suggestions (1-20). Default 5.
-  - response_format: 'markdown' (default) | 'json'.
-
-Returns:
-  { query, count, stickers: [{ package_id, sticker_id, moods, keywords_th, keywords_en, description }] }
-
-Pass the chosen package_id + sticker_id to line_send_message:
-  { message: { sticker: { package_id, sticker_id } } }
-
-Examples:
-  - "หา sticker ขอบคุณ" → { query: "ขอบคุณ" }
-  - "celebration sticker" → { query: "celebration" }`,
+Returns { query, count, stickers:[{ package_id, sticker_id, moods, keywords_th, keywords_en, description }] }.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,

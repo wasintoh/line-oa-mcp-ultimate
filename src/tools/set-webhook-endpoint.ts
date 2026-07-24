@@ -41,24 +41,9 @@ export function registerSetWebhookEndpointTool(server: McpServer): void {
     "line_set_webhook_endpoint",
     {
       title: "Set LINE Webhook Endpoint",
-      description: `Read or write the LINE OA's webhook URL (PUT/GET /v2/bot/channel/webhook/endpoint). Complements line_test_webhook — set the URL here, then ping it with line_test_webhook.
+      description: `Read or write the LINE OA's webhook URL (PUT/GET /v2/bot/channel/webhook/endpoint). mode 'set' (needs endpoint: public HTTPS, ≤500 chars) or 'get'. Complements line_test_webhook — set here, then ping with line_test_webhook.
 
-Args:
-  - mode ('set' | 'get'): write or read.
-  - endpoint (string, set only): public HTTPS URL (https:// required, ≤500 chars).
-  - oa (string, optional): OA id. Default = active OA.
-
-Returns:
-  { endpoint: string, active: boolean }   // re-read after a 'set' to confirm
-
-Examples:
-  - "ตั้ง webhook เป็น https://api.example.com/line" → { mode: "set", endpoint: "https://api.example.com/line" }
-  - "ดู webhook URL ปัจจุบัน" → { mode: "get" }
-
-Errors:
-  - Non-HTTPS or >500 char URL → inline input error (LINE requires HTTPS).
-  - mode='set' without endpoint → inline input error.
-  - LINE rejects the URL → LineApiError surfaced.`,
+Returns { endpoint, active } (re-read after a 'set' to confirm).`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: false,
