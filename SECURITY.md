@@ -66,11 +66,68 @@ bugs (report to LINE), and social engineering.
 - **SSRF guard** — server-side fetches of user-supplied URLs are https-only,
   blocked for private/link-local/metadata/multicast targets (literal IPs, DNS
   results, IPv6-mapped forms), size-capped, and re-validated on every redirect hop.
+  See [Known limitations](#known-limitations) for the one gap that remains.
 - **Config-file permission check** — a group/other-readable
   `~/.line-mcp/config.json` triggers a `chmod 600` warning at startup.
 - **Blast-radius limiters** — Quota Guardian (blocks sends projected over 95%
   of remaining quota without `confirm: true`), quiet-hours warning
   (22:00–08:00 Asia/Bangkok), and explicit `confirm` for broadcast-to-everyone.
+
+## Known limitations
+
+We would rather publish the gaps we know about than let you find them. None of
+these are exploitable in the default stdio setup with a trusted operator, but
+they are real and you should be able to weigh them yourself.
+
+### 1. DNS-rebinding window in the SSRF guard (TOCTOU)
+
+`fetchPublicImage()` in [`src/line/ssrf-guard.ts`](src/line/ssrf-guard.ts)
+resolves the hostname with `dns.lookup()` and rejects private, link-local,
+loopback, metadata, and multicast addresses before fetching. The subsequent
+`fetch()` then resolves that name **a second time, independently**. A hostname
+served with a very short TTL that answers with a public IP during validation
+and a private one microseconds later at connect time can slip through the gap
+between those two resolutions.
+
+- **Reach:** only the two tools that download a user-supplied URL —
+  `line_upload_rich_menu_image` and `line_build_rich_menu`. Every redirect hop
+  is separately re-validated, so this is not a redirect bypass.
+- **Requires:** an attacker who can both choose the image URL your agent
+  fetches *and* control authoritative DNS for that hostname.
+- **Mitigation today:** treat image URLs arriving from untrusted chat input as
+  untrusted, and don't run the server on a host whose loopback/private range
+  exposes anything sensitive.
+- **Real fix:** a custom `undici` dispatcher that pins the validated IP for the
+  life of the connection. Deferred deliberately — it rewrites the fetch path
+  used by every tool, so it belongs in a minor release with its own tests, not
+  a patch.
+
+### 2. Unknown top-level tool parameters are stripped, not rejected
+
+Every tool's input schema is declared `.strict()`, but `registerTool()` receives
+`InputSchema.shape` and the MCP SDK re-wraps it in a non-strict `z.object()`.
+The consequence: an unrecognised key at the **top level** of a tool call is
+silently dropped instead of raising `InvalidParams`. Nested schemas keep their
+strictness, so message bodies, send targets, and rich-menu tap areas still
+reject typos loudly.
+
+- **Impact:** a misspelled top-level parameter (`dry_run` typed as `dryrun`) is
+  ignored rather than reported, so the call proceeds with the default — which
+  for that particular example means a real send instead of a rehearsal. It
+  cannot inject behaviour: stripped keys never reach a handler.
+- **Status:** pinned by an assertion in
+  [`tests/send-message.e2e.test.ts`](tests/send-message.e2e.test.ts) so that any
+  future SDK change which fixes this forces a conscious update to the test
+  rather than passing unnoticed.
+
+### 3. Quota Guardian asks for confirmation at zero remaining quota
+
+When the monthly quota reports 0 remaining, the projected-share calculation
+falls back to 1 (100%), so even a send projected at **zero** messages returns
+`needs_confirmation` instead of passing through. Anything above zero is already
+hard-blocked as over-quota. This is a deliberate fail-safe — at zero remaining
+we would rather ask than assume — and is documented here so it is not filed as
+a bug.
 
 ## Operational recommendations
 
