@@ -15,7 +15,7 @@
 ## 1. Build ก่อน (ทุกครั้งหลังแก้โค้ด)
 
 ```bash
-cd /Users/wasin/Dev/AboutME/line-oa-mcp-ultimate
+cd <path-to-repo>
 npm run build
 ```
 
@@ -31,7 +31,7 @@ npm run build
   "mcpServers": {
     "line": {
       "command": "node",
-      "args": ["/Users/wasin/Dev/AboutME/line-oa-mcp-ultimate/dist/index.js"],
+      "args": ["<path-to-repo>/dist/index.js"],
       "env": {
         "LINE_CHANNEL_ACCESS_TOKEN": "ใส่ token จริง",
         "LINE_MYSHOP_API_KEY": "ใส่ MyShop key จริง"
@@ -44,7 +44,7 @@ npm run build
 **ถ้ามีหลาย OA** — ใช้ไฟล์ config แทน (ใส่ `myshop_api_key` ต่อ OA ในไฟล์ ดู [`multi-oa-setup-th.md`](multi-oa-setup-th.md)):
 
 ```json
-"env": { "LINE_MCP_CONFIG": "/Users/wasin/Dev/AboutME/line-oa-mcp-ultimate/.line-mcp.local.json" }
+"env": { "LINE_MCP_CONFIG": "<path-to-repo>/.line-mcp.local.json" }
 ```
 
 ---

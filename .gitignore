@@ -45,3 +45,18 @@ config.local.json
 
 # Cowork project instructions (internal — not for the public repo)
 CLAUDIA-ENGINEER-INSTRUCTOR.md
+
+# Personal / non-project artifacts (slides, docs, working notes — ห้ามขึ้น public repo)
+*.pptx
+*.ppt
+*.docx
+*.doc
+*.xlsx
+*.xls
+*.key
+*.pages
+*.numbers
+PROGRESS.md
+
+# OS junk ทุกชั้น
+**/.DS_Store
