@@ -1,4 +1,4 @@
-# คู่มือ LINE Messaging (35 tools) ภาษาไทย
+# คู่มือ LINE Messaging (37 tools) ภาษาไทย
 
 > สั่งงาน LINE Official Account ด้วย "ภาษาคน" ผ่าน AI — ส่ง broadcast, ออกแบบ Flex, สร้าง rich menu, ทำ audience, ดู insight, จัดการคูปอง โดยไม่ต้องเปิดหน้าเว็บ LINE OA Manager หรือเขียนโค้ดเลย
 
@@ -57,7 +57,7 @@ Quiet Hours — ถ้าเป็นช่วง 22:00–08:00 (เวลาไ
 
 ---
 
-## 2. ภาพรวมเครื่องมือ 34 ตัว
+## 2. ภาพรวมเครื่องมือ 37 ตัว
 
 | กลุ่ม | เครื่องมือ | ทำอะไร |
 |---|---|---|
@@ -72,9 +72,11 @@ Quiet Hours — ถ้าเป็นช่วง 22:00–08:00 (เวลาไ
 | | `line_set_default_rich_menu` | ตั้ง/ลบเมนูหลักของ OA |
 | | `line_manage_rich_menu_alias` | จัดการ alias (เมนูสลับแท็บ) |
 | | `line_upload_rich_menu_image` | เปลี่ยนรูปเมนูเดิม |
-| 💎 **ออกแบบข้อความ (3)** | `line_design_flex` | ออกแบบ Flex Message |
+| 💎 **ออกแบบข้อความ (5)** | `line_design_flex` | ออกแบบ Flex Message |
 | | `line_design_imagemap` | ออกแบบ Rich Message (รูปกดได้ + วิดีโอ) |
 | | `line_design_card` | ออกแบบ Card Message (ปุ่ม/ยืนยัน/การ์ดเลื่อน) |
+| | `line_prepare_image` | เตรียมรูปให้พร้อมส่ง — ย่อ 5 ขนาด + host ให้เอง + ตรวจก่อนบอกสำเร็จ (v2.2) |
+| | `line_image_host_status` | เช็กสถานะระบบ host รูป (อ่านอย่างเดียว, v2.2) |
 | 🎯 **Audience (5)** | `line_build_audience_from_csv` | สร้างกลุ่มเป้าหมายจากรายชื่อ user |
 | | `line_build_audience_from_engagement` | สร้างกลุ่มจากคนที่เคยคลิก/เปิดข้อความ |
 | | `line_list_audiences` | ดูกลุ่มเป้าหมายทั้งหมด + สถานะ |
@@ -164,12 +166,21 @@ Quiet Hours — ถ้าเป็นช่วง 22:00–08:00 (เวลาไ
 #### `line_design_imagemap` — ออกแบบ Rich Message
 รูปใหญ่ที่กดได้หลายจุด + ใส่วิดีโอเล่นในรูปได้
 - 🗣️ "ทำ Rich Message รูปร้าน แบ่ง 3 จุดกด: เมนู / โปร / แผนที่"
-- ⚠️ รูปต้อง host เอง (HTTPS) · ความกว้างมาตรฐาน 1040px
+- ⚠️ ความกว้างมาตรฐาน 1040px · **v2.2: ไม่ต้อง host เองแล้ว** — เรียก `line_prepare_image` ก่อน แล้วส่ง `prepared_key` มาแทน `base_url`
 
 #### `line_design_card` — ออกแบบ Card Message
 การ์ดสำเร็จรูป 4 แบบ: ปุ่ม (buttons), ยืนยัน (confirm), การ์ดเลื่อน (carousel), การ์ดรูปเลื่อน (image_carousel)
 - 🗣️ "ทำการ์ดปุ่ม: สั่งซื้อ / ดูรายละเอียด / ทักแชท"
 - ⚠️ buttons ≤4 ปุ่ม · carousel ทุกการ์ดต้องมีจำนวนปุ่มเท่ากัน (กฎ LINE) · สูงสุด 10 การ์ด
+
+#### `line_prepare_image` — เตรียมรูปให้พร้อมส่ง (v2.2)
+แนบรูปอะไรมาก็ได้ (ไฟล์ในเครื่อง / ลิงก์) ระบบย่อครบ 5 ขนาดที่ LINE ต้องการ เปิดที่ host ให้เองอัตโนมัติ และตรวจว่า LINE ดึงได้จริงทุกขนาดก่อนบอกว่าสำเร็จ — ได้ `prepared_key` ไปใช้กับ `design_imagemap` / `send_message` ต่อทันที
+- 🗣️ "ส่งรูปนี้เป็น Rich Message หาลูกค้าทุกคน"
+- ⚠️ LINE มาดึงรูปตอนลูกค้า "เปิดอ่านครั้งแรก" — เปิดเครื่องทิ้งไว้จนลูกค้าส่วนใหญ่เปิดอ่าน (ระบบเปิดให้ 24 ชม.) · คู่มือเต็ม: [image-hosting-th.md](image-hosting-th.md)
+
+#### `line_image_host_status` — เช็กสถานะระบบ host รูป (v2.2)
+บอกว่าช่องทาง host ไหนพร้อมใช้ สะพานเปิดอยู่ไหม มีรูปพักในหน่วยความจำเท่าไร — อ่านอย่างเดียว เรียกได้เสมอ
+- 🗣️ "ทำไม host รูปอัตโนมัติไม่ได้" · "เช็กระบบรูปหน่อย"
 
 ### 🎯 กลุ่ม Audience
 
@@ -328,7 +339,7 @@ narrowcast ส่งแบบ async — ตัวนี้บอกว่าส�
 | ⏱️ **Reply token ~25 วินาที** | ตอบกลับช้ากว่านั้น token หมดอายุ → ระบบ fallback ไป push |
 | ⏳ **Audience รอ ~10 นาที** | สร้างเสร็จต้องรอ index (IN_PROGRESS) ก่อนใช้ส่ง |
 | 📝 **ข้อความ ≤5,000 ตัว** · **Flex ≤30 KB/bubble** · **carousel ≤12** | ลิมิตรูปแบบข้อความ |
-| 🖼️ **รูปต้อง HTTPS ตรง** | Rich menu/imagemap/รูป — ใช้ R2/S3/Cloudinary เลี่ยงลิงก์แชร์ Drive/Dropbox |
+| 🖼️ **รูปต้อง HTTPS ตรง** | Rich menu/รูป — ใช้ R2/S3/Cloudinary เลี่ยงลิงก์แชร์ Drive/Dropbox · หรือให้ `line_prepare_image` จัดการให้ทั้งหมด (v2.2) |
 | 🔢 **Insight ขั้นต่ำ 20 คน** | กลุ่มเล็กกว่านี้ LINE คืนค่าว่าง (privacy) · insight ดีเลย์ T-1/T-2 |
 
 ---

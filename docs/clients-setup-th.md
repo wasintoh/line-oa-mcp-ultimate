@@ -1,6 +1,6 @@
 # ติดตั้งใน AI Agent Tools ต่างๆ (Claude Code · Cursor · Codex)
 
-> `line-oa-mcp-ultimate` เป็น MCP server ตัวเดียว ใช้ได้กับทุก host ที่รองรับ MCP — โค้ดตัวเดียวกัน, tool ชุดเดียวกัน (35 messaging tools + 14 LINE Shopping tools แบบ opt-in = สูงสุด 49) ต่างกันแค่ "วิธีบอก host ให้รัน" และไฟล์ config คนละรูปแบบ
+> `line-oa-mcp-ultimate` เป็น MCP server ตัวเดียว ใช้ได้กับทุก host ที่รองรับ MCP — โค้ดตัวเดียวกัน, tool ชุดเดียวกัน (37 messaging tools + 14 LINE Shopping tools แบบ opt-in = สูงสุด 51) ต่างกันแค่ "วิธีบอก host ให้รัน" และไฟล์ config คนละรูปแบบ
 
 สำหรับ **Claude Cowork** ดู [`quickstart-th.md`](quickstart-th.md) · สำหรับ **Multi-OA** ดู [`multi-oa-setup-th.md`](multi-oa-setup-th.md)
 
@@ -83,7 +83,7 @@ Cursor ใช้ไฟล์ JSON รูปแบบเดียวกับ Cla
 
 หรือผ่าน UI: **Settings → Features → MCP → Add** (กรอก Name = `line`, Transport = stdio, Command = `npx -y line-oa-mcp-ultimate`)
 
-> ⚠️ **Tool limit ของ Cursor ~40 tools รวมทุก MCP** — `line-oa-mcp-ultimate` มี 35 messaging tools (และ +14 ถ้าเปิด LINE Shopping = 49) ซึ่งเกิน limit ของ Cursor เองได้ ถ้าใช้ใน Cursor แนะนำเปิด shopping เฉพาะตอนจำเป็น (ไม่ใส่ `myshop_api_key`/`LINE_MYSHOP_API_KEY` ถ้ายังไม่ใช้) และเปิด MCP อื่นเท่าที่ใช้จริง — Cowork ไม่มี limit นี้
+> ⚠️ **Tool limit ของ Cursor ~40 tools รวมทุก MCP** — `line-oa-mcp-ultimate` มี 37 messaging tools (และ +14 ถ้าเปิด LINE Shopping = 51) ซึ่งเกิน limit ของ Cursor เองได้ ถ้าใช้ใน Cursor แนะนำเปิด shopping เฉพาะตอนจำเป็น (ไม่ใส่ `myshop_api_key`/`LINE_MYSHOP_API_KEY` ถ้ายังไม่ใช้) และเปิด MCP อื่นเท่าที่ใช้จริง — Cowork ไม่มี limit นี้
 
 ---
 
@@ -123,7 +123,7 @@ LINE_CHANNEL_ACCESS_TOKEN = "YOUR_TOKEN"
 
 ## ทำอะไรได้บ้าง — เหมือนกันทั้ง 3 tools
 
-เพราะเป็น MCP server ตัวเดียวกัน ทุก host จึงได้ tool ชุดเดียวกันครบเท่ากัน — **35 messaging tools + 4 resources + 8 prompts** เช่น `send_message` (broadcast/push/multicast), `design_flex`, `design_rich_menu_image` (v2.1 — วาดภาพเมนูให้เอง), `build_rich_menu`, `manage_coupon`, `get_oa_report`, audience tools, `manage_liff_app` ฯลฯ — และ **+14 LINE Shopping tools** (`list_products`, `list_orders`, `fulfill_order`, `create_checkout_link` ฯลฯ) เมื่อใส่ MyShop key
+เพราะเป็น MCP server ตัวเดียวกัน ทุก host จึงได้ tool ชุดเดียวกันครบเท่ากัน — **37 messaging tools + 4 resources + 8 prompts** เช่น `send_message` (broadcast/push/multicast), `prepare_image` (v2.2 — ส่งรูป/Rich Message ไม่ต้องมี host), `design_flex`, `design_rich_menu_image` (v2.1 — วาดภาพเมนูให้เอง), `build_rich_menu`, `manage_coupon`, `get_oa_report`, audience tools, `manage_liff_app` ฯลฯ — และ **+14 LINE Shopping tools** (`list_products`, `list_orders`, `fulfill_order`, `create_checkout_link` ฯลฯ) เมื่อใส่ MyShop key
 
 ต่างกันแค่ **บริบทการใช้งานของ host**:
 
