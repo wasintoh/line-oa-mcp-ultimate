@@ -12,7 +12,7 @@ export const LINE_API_DATA_BASE = "https://api-data.line.me"; // for content / a
 
 // ---- Server identity ----
 export const SERVER_NAME = "line-oa-mcp-ultimate";
-export const SERVER_VERSION = "2.1.0";
+export const SERVER_VERSION = "2.2.0";
 
 // ---- Response sizing ----
 export const CHARACTER_LIMIT = 25_000; // truncate responses beyond this size
@@ -100,3 +100,35 @@ export const MYSHOP_CHECKOUT_MAX_ITEMS = 15; // orderItems: 1..15
 export const MYSHOP_TRACKING_MAX_LEN = 50; // trackingNumber ≤ 50 chars
 // Published rate limit per API resource (exceeding → 429). Surfaced so agents pace themselves.
 export const MYSHOP_RATE_LIMIT = { per_sec: 50, per_min: 1000 } as const;
+
+// ============================================================================
+// v2.2 — Image Hosting Layer (line_prepare_image)
+// LINE is pull-model: message images live on public HTTPS and LINE fetches
+// them when each recipient FIRST VIEWS the message (verified live 2026-07-31;
+// once viewed, LINE's cache serves them permanently). These constants govern
+// the resize pipeline, the in-memory store, and hosting lifecycles.
+// ============================================================================
+/** Imagemap width variants LINE requests from baseUrl (no file extension). */
+export const IMAGEMAP_SIZES = [1040, 700, 460, 300, 240] as const;
+/** Max input image size for file_path / source_url inputs. */
+export const IMAGE_INPUT_MAX_BYTES = 10 * 1024 * 1024; // 10MB
+/**
+ * Pixel-bomb guards (QC finding, reproduced live): a sub-1MB PNG can DECLARE
+ * e.g. 18000×18000 px — 5 synchronous resvg renders of that froze the event
+ * loop for ~26s (and taller ones SIGABRT). Dimensions are read from the
+ * header, so these caps reject hostile images before any native decode.
+ */
+export const IMAGE_MAX_DIMENSION = 12_000; // px per side
+export const IMAGE_MAX_PIXELS = 60_000_000; // ~60MP total
+/** Max height of any rendered variant (skinny-image guard: 100×600k src passes 60MP but H at 1040 → 6.2M px). */
+export const IMAGE_MAX_VARIANT_HEIGHT = 5_200; // 5× the 1040 base width — beyond any real Rich Message
+/** Max base64 payload length (chars). ~3MB decoded — base64 rides the LLM context, keep it tight. */
+export const IMAGE_BASE64_MAX_CHARS = 4_200_000;
+/** Total in-memory image store budget across all prepared keys. */
+export const IMAGEHOST_STORE_MAX_BYTES = 128 * 1024 * 1024; // 128MB
+/** Default hosting keep-alive after prepare (best-effort under stdio — process death ends it). */
+export const IMAGEHOST_DEFAULT_KEEPALIVE_S = 86_400; // 24h — must cover recipients' FIRST-VIEW window (LINE fetches on first view, verified live 2026-07-31)
+/** Per-URL timeout for the post-host verification pass (HEAD each size). */
+export const IMAGEHOST_VERIFY_TIMEOUT_MS = 10_000;
+/** How long we wait for cloudflared to print its public URL before falling back. */
+export const TUNNEL_START_TIMEOUT_MS = 30_000;

@@ -5,6 +5,57 @@ All notable changes to `line-oa-mcp-ultimate` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] — 2026-07-31 "Zero-Hosting Release"
+
+Theme: send images and Rich Messages with **zero hosting knowledge**. 100%
+backward compatible — every existing tool, schema, env var, and config key
+keeps its exact shape; all new fields are optional.
+
+### Added
+
+- **Image Hosting Layer** — new tool `line_prepare_image`: takes any image
+  (local `file_path`, `base64`, or public `source_url` — Google Drive/Dropbox
+  share links auto-rewritten to direct-download), resizes it to LINE's five
+  imagemap widths (1040/700/460/300/240) with the existing `@resvg/resvg-js`
+  (no new dependencies; JPEG + PNG in, PNG out), hosts it via an auto-selected
+  provider chain, **HEAD-verifies every size** before ever claiming success
+  (a LINE `success: true` never meant "the image renders" — now we prove it),
+  and returns a `prepared_key`. Providers: `self` (HTTP deployments — set
+  `MCP_PUBLIC_URL`; images served from the same listener at `GET /i/:key/:size`,
+  auth-exempt by design with unguessable random keys (96-bit entropy + content hash), memory-only serving),
+  `local-tunnel` (default for stdio installs — cloudflared quick tunnel, free,
+  no account, outbound-only so it works behind NAT with zero router setup;
+  binary pinned to 2026.7.3 and SHA-256-verified before first run), and
+  `handoff` (a deterministic zip of the five correctly-named files + Thai
+  step-by-step instructions — nobody ever dead-ends). If hosting "succeeds"
+  but verification fails (e.g. corporate networks that block the tunnel data
+  plane), the tool tears the tunnel down and falls back to handoff
+  automatically. New env vars (all optional): `MCP_PUBLIC_URL`,
+  `LINE_MCP_TUNNEL=off`, `LINE_MCP_CLOUDFLARED_PATH`.
+- **`line_image_host_status`** — read-only diagnostics: which provider would
+  be used, tunnel liveness/expiry, how the cloudflared binary would be
+  obtained, in-memory store usage.
+- `line_design_imagemap` now accepts `prepared_key` (base_url AND base_height
+  auto-filled from the prepared image); the classic `base_url` path is
+  unchanged. `line_send_message` accepts
+  `message.image.prepared_key` for image messages. Tool count 49 → 51.
+- Thai user guide [docs/image-hosting-th.md](docs/image-hosting-th.md);
+  live-network check scripts `scripts/live-tunnel-check.mjs` and
+  `scripts/live-fallback-check.mjs`; v2.2 brand logo
+  (`docs/brand/logo-v22-tagline.png`).
+
+### Notes
+
+- **Live-verified LINE behavior (2026-07-31):** LINE fetches message images
+  when each recipient **first views** the message — not at send time — and
+  caches them permanently after that first view (survives host shutdown and
+  device restarts). Hosting must therefore stay alive until the audience has
+  opened the message; the default keep-alive is 24h, best-effort within the
+  MCP process lifetime. `prepared_key`s live in memory and do not survive a
+  restart (the error message says exactly what to do).
+- TryCloudflare quick tunnels have no SLA and a 200-concurrent-request cap —
+  used here only as a send-window bridge, which is inside those limits.
+
 ## [2.1.0] — 2026-07-24 "Trust Release"
 
 Theme: Test + Security + Optimize + one visible upgrade. 100% backward

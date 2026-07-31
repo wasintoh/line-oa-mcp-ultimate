@@ -1,10 +1,12 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/wasintoh/line-oa-mcp-ultimate/main/docs/brand/logo-v21-tagline.png" alt="<OA/> MCP Ultimate 2.1 — MCP server for LINE Official Account" width="720">
+<img src="https://raw.githubusercontent.com/wasintoh/line-oa-mcp-ultimate/main/docs/brand/logo-v22-tagline.png" alt="<OA/> MCP Ultimate 2.2 — MCP server for LINE Official Account" width="720">
 
 # LINE OA MCP Ultimate
 
 **Operate your LINE Official Account from any AI agent — through natural language.**
+
+🖼️ **New in 2.2:** attach a picture, say *"send this as a Rich Message"* — and it appears in your customers' chats. No hosting. No image resizing. No setup.
 
 [![CI](https://github.com/wasintoh/line-oa-mcp-ultimate/actions/workflows/test.yml/badge.svg)](https://github.com/wasintoh/line-oa-mcp-ultimate/actions/workflows/test.yml)
 [![npm version](https://img.shields.io/npm/v/line-oa-mcp-ultimate.svg)](https://www.npmjs.com/package/line-oa-mcp-ultimate)
@@ -17,7 +19,7 @@
 
 [Quick Start](#quick-start) · [What you can do](#what-you-can-do) · [Configuration](#configuration) · [Security](#-security) · [Documentation](#documentation)
 
-**🇹🇭 คู่มือภาษาไทย:** [เริ่มต้น 5 นาที](docs/quickstart-th.md) · [Messaging — 35 tools](docs/messaging-guide-th.md) · [LINE Shopping — 14 tools](docs/myshop-guide-th.md)
+**🇹🇭 คู่มือภาษาไทย:** [เริ่มต้น 5 นาที](docs/quickstart-th.md) · [Messaging — 37 tools](docs/messaging-guide-th.md) · [LINE Shopping — 14 tools](docs/myshop-guide-th.md)
 
 </div>
 
@@ -42,6 +44,7 @@ LINE OA Manager works well — but it's a web UI you have to log into, click thr
 | Instead of clicking through LINE OA Manager... | Just say... |
 |---|---|
 | Open broadcast composer → pick audience → write text → preview → schedule | "Send a Mother's Day promo to my Bangkok-based 25-44 female audience" |
+| Resize the artwork to 5 sizes → find somewhere to host it → upload → paste URLs into a Rich Message | "ส่งรูปนี้เป็น Rich Message หาลูกค้าทุกคน" *(attach the picture — that's the whole job)* |
 | Navigate Insight → Delivery → pick date range → screenshot | "Summarize last week's performance" |
 | Open Audience → create from upload → upload CSV → wait | "Create an audience from this CSV: customers_last_month.csv" |
 | Open Rich Menu → design tabs → upload images → set as default | "Build a Mother's Day rich menu and set it as default" |
@@ -57,8 +60,9 @@ LY Corporation publishes an official [LINE Bot MCP server](https://github.com/li
 
 | | **`line-oa-mcp-ultimate`** (this project) | official `@line/line-bot-mcp-server` |
 |---|---|---|
-| Tools | **49** (35 messaging + 14 shopping) + 4 resources + 8 guided prompts | 12 (push/broadcast text & Flex, profile, quota read, rich-menu basics, follower IDs) |
+| Tools | **51** (37 messaging + 14 shopping) + 4 resources + 8 guided prompts | 12 (push/broadcast text & Flex, profile, quota read, rich-menu basics, follower IDs) |
 | LINE Shopping (MyShop) | ✅ 14 opt-in tools — products, stock, orders, parcel labels, settlements, checkout links | ❌ |
+| Rich Message images | ✅ zero-setup (v2.2) — attach a picture, everything else is automatic and **verified delivered-able before "success"** | ❌ bring your own hosted URLs |
 | Multi-OA | ✅ one config file for all client OAs + runtime switch (`line_use_oa`) + fan-out (`line_run_on_many_oas`) | ❌ one OA per server instance |
 | Quota / quiet-hours guardrails | ✅ pre-flight Quota Guardian, 22:00–08:00 quiet-hours warnings, `dry_run` cost estimates | ➖ quota *read* tool (`get_message_quota`); no pre-flight guardrails |
 | Thai i18n | ✅ every user-facing error/warning in Thai, plus full Thai guides | ❌ English (Japanese README available) |
@@ -83,7 +87,7 @@ LY Corporation publishes an official [LINE Bot MCP server](https://github.com/li
 
 ## What you can do
 
-**35 messaging tools + 14 LINE Shopping tools (v2.0, opt-in) + 4 resources + 8 guided prompts**, grouped by what you actually want to do:
+**37 messaging tools + 14 LINE Shopping tools (v2.0, opt-in) + 4 resources + 8 guided prompts**, grouped by what you actually want to do:
 
 ### 📨 Send messages (2 tools)
 One universal `send_message` covers every LINE transport (reply / push / multicast / narrowcast / broadcast). Three modes: `send_now`, `draft` (for scheduling via LINE OA Manager UI), and `dry_run` (validate + estimate cost without sending). Message shapes: text, Flex (template or raw JSON), sticker, **image**, **video**, **native LINE coupon** (`{ coupon_id }`), and a `message_json` passthrough for pre-built Rich/Card messages. Plus Thai-friendly sticker search.
@@ -91,8 +95,8 @@ One universal `send_message` covers every LINE transport (reply / push / multica
 ### 🎨 Rich Menus (9 tools)
 Build a rich menu in one call (create + upload image + set as default), list, delete, and diagnose "why doesn't this user see my menu?". Full lifecycle too: **link/unlink** a menu to specific users or in bulk (auto-chunked at 500), **set/clear** the account default, manage rich-menu **aliases** (tab-switching menus), and **swap the image** on an existing menu. **New in v2.1 — Rich Menu Studio:** `line_design_rich_menu_image` generates the menu image itself (Thai-ready layout templates, pure-JS satori + resvg — no headless browser), lets you **preview before deploying**, then hands off to `line_build_rich_menu`.
 
-### 💎 Message Design (3 tools)
-Design **Flex Messages** from 8 Thai-localized templates or raw JSON, build **Rich Messages** (`imagemap` — tappable image regions + optional video), and **Card Messages** (`template` — buttons / confirm / carousel / image_carousel). Each returns ready-to-send JSON you hand to `send_message`.
+### 💎 Message Design (5 tools)
+Design **Flex Messages** from 8 Thai-localized templates or raw JSON, build **Rich Messages** (`imagemap` — tappable image regions + optional video), and **Card Messages** (`template` — buttons / confirm / carousel / image_carousel). Each returns ready-to-send JSON you hand to `send_message`. **New in v2.2:** Rich Messages need zero hosting — attach any image and it's resized, hosted, and verified for you (`line_prepare_image` + `line_image_host_status`).
 
 ### 🎯 Audiences (5 tools)
 Build retargeting audiences from a CSV or from prior broadcast engagement, list, delete — and **update** an existing audience (add users, rename).
@@ -285,21 +289,37 @@ For agencies running a shared remote instance, the server also supports Streamab
 
 ---
 
-## 🖼️ Image hosting
+## 🖼️ Images & Rich Messages — zero setup (v2.2)
 
-Every tool that uses an image — broadcast image, rich menu, card, imagemap, flex, **and LINE Shopping products (v2.0)** — needs a **public, direct HTTPS URL** to a JPEG/PNG. LINE fetches the image from that URL, so it must be directly accessible (not a preview page). MyShop has no binary upload endpoint, so host the image first and pass its URL.
+Before 2.2, sending one Rich Message meant: resize your artwork into five exact sizes, find hosting, upload, paste URLs — the step where most shop owners simply gave up. Now the whole workflow is:
+
+> **Attach a picture. Say "send this as a Rich Message". Done.**
+
+What you get, without doing anything:
+
+- 📐 Every size LINE requires — prepared automatically.
+- 🌍 Your image made reachable for LINE — automatically, wherever you run: your laptop, a server, anywhere. Nothing to sign up for, nothing to configure.
+- ✅ **Verified before "success"** — the tool checks that LINE can actually pull every size *before* it ever tells you the send worked. The classic "API said success but customers see a blank image" problem is gone.
+- 🧰 **Never a dead end** — on locked-down networks where automation isn't possible, you instantly get a ready-made package + 1-minute Thai instructions instead of an error.
+
+One honest rule to remember: LINE collects the image when each customer **first opens** the message — so keep your machine on until your audience has seen it (the built-in 24-hour window covers a normal broadcast day). Once opened, the image lives on LINE's side permanently.
+
+Full guide + troubleshooting (Thai): [docs/image-hosting-th.md](docs/image-hosting-th.md)
+
+Prefer hosting yourself (agencies, long-running campaigns)? Everything still works the classic way — every image tool accepts a **public, direct HTTPS URL** to a JPEG/PNG:
 
 - ✅ **Recommended:** Cloudflare R2, AWS S3 (public bucket), `raw.githubusercontent.com`, Cloudinary, ImageKit — stable, direct URLs.
-- ⚠️ **Avoid:** Google Drive / Dropbox share links — they return an HTML preview page, not a direct image, so LINE can't read them reliably.
+- ⚠️ **Avoid:** Google Drive / Dropbox share links — they return an HTML preview page, not a direct image. (The `source_url` input rewrites these to direct-download form automatically.)
 
 ## Documentation
 
 | Doc | What's in it |
 |---|---|
 | [docs/quickstart-th.md](docs/quickstart-th.md) | Thai-language quick start (5-minute walkthrough) |
-| [docs/messaging-guide-th.md](docs/messaging-guide-th.md) | 📨 **Messaging full guide — Thai.** All 35 tools explained, transports & send modes, real workflows, safety limits, and troubleshooting |
+| [docs/messaging-guide-th.md](docs/messaging-guide-th.md) | 📨 **Messaging full guide — Thai.** The messaging tools explained, transports & send modes, real workflows, safety limits, and troubleshooting |
 | [docs/myshop-guide-th.md](docs/myshop-guide-th.md) | 🛍️ **LINE Shopping (MyShop) full guide — Thai.** Get the API key, all 14 tools explained, real end-to-end workflows, safety rules, and troubleshooting |
 | [docs/clients-setup-th.md](docs/clients-setup-th.md) | Per-host MCP setup — Cowork / Claude Desktop / Cursor / Codex (Thai) |
+| [docs/image-hosting.md](docs/image-hosting.md) · [docs/image-hosting-th.md](docs/image-hosting-th.md) | 🖼️ **Images & Rich Messages with zero hosting (v2.2)** — EN + Thai: how it works, the first-view rule, troubleshooting |
 | [docs/multi-oa-setup-th.md](docs/multi-oa-setup-th.md) | Multi-OA configuration guide (Thai) |
 | [docs/cowork-local-test-th.md](docs/cowork-local-test-th.md) | Test a local build in Claude Cowork before publishing (Thai) |
 | [docs/http-transport.md](docs/http-transport.md) | Streamable HTTP transport for self-hosted / remote use |

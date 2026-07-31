@@ -57,6 +57,9 @@ function sendPathCallCounts(): Record<string, number> {
 
 describe("send_now — push happy path", () => {
   it("validates BEFORE sending, carries x-line-retry-key, returns success structured content", async () => {
+    // Pin the clock to 12:00 BKK — otherwise this test fails between 22:00-08:00
+    // BKK when the (correct) quiet-hours warning appears. Timers stay real.
+    vi.useFakeTimers({ now: new Date("2026-01-15T05:00:00Z"), toFake: ["Date"] });
     mockQuota(1000, 100); // remaining 900
 
     const result = await mcp.callTool("line_send_message", {

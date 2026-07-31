@@ -1,7 +1,7 @@
 {
   "name": "line-oa-mcp-ultimate",
-  "version": "2.1.0",
-  "description": "Operate one or many LINE Official Accounts from any AI agent through natural language — messaging and commerce, no code. Messaging: broadcasts, Flex messages, rich menus, audiences, coupons, and insights. New in 2.1 — Rich Menu Studio: generate professionally designed Thai rich-menu images (LINE Seed / Prompt fonts) and deploy with auto-derived tap areas, preview-before-deploy, no designer and no Chromium. LINE Shopping (MyShop, opt-in): manage products, inventory, and orders, print parcel labels, check settlements, and generate checkout links to close sales right in chat. 35 messaging + 14 shopping tools, agency-ready multi-OA. Works with Claude Cowork, Claude Code, Cursor, Codex, ChatGPT desktop, and any MCP-compatible host.",
+  "version": "2.2.0",
+  "description": "Operate one or many LINE Official Accounts from any AI agent — through natural language, no code. Send broadcasts, design Flex messages and tappable Rich Messages, build Thai-ready rich menus (Rich Menu Studio), manage audiences, coupons, and insights. New in 2.2: attach a picture and say send — it reaches your customers with ZERO hosting setup, auto-resized to every size LINE needs and verified deliverable before the tool ever says success (never a dead end, even on locked-down networks). LINE Shopping (MyShop, opt-in): products, stock, orders, parcel labels, settlements, checkout links. 37 messaging + 14 shopping tools, agency-ready multi-OA. Works with Claude Cowork, Claude Code, Cursor, Codex, ChatGPT desktop, and any MCP-compatible host.",
   "keywords": [
     "mcp",
     "mcp-server",

@@ -16,6 +16,8 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { resolveOa } from "../config/multi-oa.js";
+import { imageStore } from "../imagehost/store.js";
+import { ImageHostError } from "../imagehost/types.js";
 import { LineApiError, LineClient } from "../line/client.js";
 import { redactSecrets } from "../line/redact.js";
 import { FLEX_TEMPLATE_NAMES, renderTemplate } from "../line/flex-templates.js";
@@ -98,15 +100,26 @@ const MessageSchema = z.union([
         .describe("Insight path label (≤30, [A-Za-z0-9_])."),
     })
     .strict(),
-  // Image message (both URLs HTTPS + user-hosted; no upload API)
+  // Image message — either self-hosted HTTPS URLs, or a prepared_key from
+  // line_prepare_image (which hosted + verified the image already).
   z
     .object({
-      image: z
-        .object({
-          original_content_url: z.string().url().describe("HTTPS JPEG/PNG, the full-size image"),
-          preview_image_url: z.string().url().describe("HTTPS JPEG/PNG, the preview thumbnail"),
-        })
-        .strict(),
+      image: z.union([
+        z
+          .object({
+            original_content_url: z.string().url().describe("HTTPS JPEG/PNG, the full-size image"),
+            preview_image_url: z.string().url().describe("HTTPS JPEG/PNG, the preview thumbnail"),
+          })
+          .strict(),
+        z
+          .object({
+            prepared_key: z
+              .string()
+              .min(1)
+              .describe("Key returned by line_prepare_image (purpose 'image_message') — URLs are filled in automatically"),
+          })
+          .strict(),
+      ]),
     })
     .strict(),
   // Video message (mp4 ≤200MB on an HTTPS range-request host; tracking_id fires videoPlayComplete)
@@ -143,7 +156,7 @@ const InputSchema = z
       "Who to send to. Pick one shape: { reply_to } | { user_id } | { user_ids[] } | { audience } | { filter } | { everyone: true }",
     ),
     message: MessageSchema.describe(
-      "What to send. Pick one shape: { text } | { template, data } | { flex_json, alt_text } | { sticker } | { coupon_id }",
+      "What to send. Pick one shape: { text } | { template, data } | { flex_json, alt_text } | { sticker } | { coupon_id } | { image: { original_content_url, preview_image_url } or { prepared_key } } | { video: {...} } | { message_json } (pre-built object from the design tools)",
     ),
     mode: z
       .enum(["send_now", "draft", "dry_run"])
@@ -197,6 +210,24 @@ function buildLineMessages(message: Input["message"]): LineMessage[] {
     return [coupon as unknown as LineMessage];
   }
   if ("image" in message) {
+    if ("prepared_key" in message.image) {
+      const key = message.image.prepared_key;
+      const hosting = imageStore.getHosting(key);
+      if (!hosting) throw new ImageHostError(TH.imgPreparedKeyNotFound(key), "key-not-found");
+      if (!hosting.imageUrl || !hosting.previewImageUrl) {
+        // Handoff results carry no URLs — telling the user "not found, prepare
+        // again" here would send them into a pointless re-prepare loop (QC catch):
+        // the environment, not the key, is what needs to change.
+        throw new ImageHostError(TH.imgPreparedNoImageUrls(key), "provider-unavailable");
+      }
+      return [
+        {
+          type: "image",
+          originalContentUrl: hosting.imageUrl,
+          previewImageUrl: hosting.previewImageUrl,
+        },
+      ];
+    }
     return [
       {
         type: "image",
@@ -254,7 +285,7 @@ export function registerSendMessageTool(server: McpServer): void {
     "line_send_message",
     {
       title: "Send LINE Message (universal)",
-      description: `Universal LINE sender. Auto-picks the API (reply/push/multicast/narrowcast/broadcast) from the \`target\` shape; \`message\` shape selects text/template/flex/sticker/coupon/image/video. Feed pre-built objects from line_design_imagemap/line_design_card/line_design_flex via message.message_json; native coupons from line_manage_coupon via message.coupon_id.
+      description: `Universal LINE sender. Auto-picks the API (reply/push/multicast/narrowcast/broadcast) from the \`target\` shape; \`message\` shape selects text/template/flex/sticker/coupon/image/video. Feed pre-built objects from line_design_imagemap/line_design_card/line_design_flex via message.message_json; native coupons from line_manage_coupon via message.coupon_id; images hosted by line_prepare_image via message.image.prepared_key (no URLs needed).
 
 mode: send_now (default) sends immediately; draft returns a LINE OA Manager handoff package (URL + Flex JSON + steps) — use when the user wants to SCHEDULE, since the Messaging API can't schedule but the OA Manager UI can; dry_run validates + estimates cost without sending.
 
@@ -482,6 +513,10 @@ function errorReply(err: unknown): {
   content: { type: "text"; text: string }[];
   isError: true;
 } {
+  if (err instanceof ImageHostError) {
+    // Already a complete, actionable Thai message — do NOT wrap in unknownError.
+    return { isError: true, content: [{ type: "text", text: err.message }] };
+  }
   if (err instanceof LineApiError) {
     const detail = err.details.length ? `\n${err.details.join("\n")}` : "";
     return {

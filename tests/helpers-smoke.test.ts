@@ -27,9 +27,9 @@ describe("test harness smoke", () => {
     restoreEnv();
   });
 
-  it("lists the 35 messaging tools when no MyShop key is configured", async () => {
+  it("lists the 37 messaging tools when no MyShop key is configured", async () => {
     const { tools } = await mcp.client.listTools();
-    expect(tools.length).toBe(35); // 34 v2.0 tools + line_design_rich_menu_image (v2.1)
+    expect(tools.length).toBe(37); // 34 v2.0 + rich-menu-studio (v2.1) + prepare-image + image-host-status (v2.2)
     expect(tools.map((t) => t.name)).toContain("line_send_message");
     expect(tools.map((t) => t.name)).toContain("line_design_rich_menu_image");
   });

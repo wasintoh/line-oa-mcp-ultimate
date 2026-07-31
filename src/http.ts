@@ -27,6 +27,8 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 
 import { SERVER_NAME, SERVER_VERSION } from "./constants.js";
 import { TH } from "./i18n/th.js";
+import { handleImageHostRequest } from "./imagehost/http-route.js";
+import { registerSelfHost } from "./imagehost/providers/self.js";
 import { redactSecrets, registerSecret } from "./line/redact.js";
 
 export interface StartHttpServerOptions {
@@ -98,6 +100,16 @@ export async function startHttpServer(
   // The HTTP auth token is a secret too — never let it surface in logs.
   registerSecret(authToken);
 
+  // v2.2 self image-host: behind a proxy/tunnel the process cannot discover its
+  // own public address — the operator declares it via MCP_PUBLIC_URL. Validated
+  // here so a misconfiguration fails at boot, not silently at send time.
+  if (process.env.MCP_PUBLIC_URL) {
+    registerSelfHost(process.env.MCP_PUBLIC_URL);
+    console.error(
+      `[${SERVER_NAME}] Image self-host enabled — /i/* served under ${process.env.MCP_PUBLIC_URL}`,
+    );
+  }
+
   const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
     // DNS-rebinding protection — only accept connections to our host header.
     const originHeader = req.headers.origin;
@@ -121,6 +133,12 @@ export async function startHttpServer(
       res.end(JSON.stringify({ ok: true, name: SERVER_NAME, version: SERVER_VERSION }));
       return;
     }
+
+    // v2.2 image hosting: GET/HEAD /i/:key/:size served from the in-memory
+    // store. Deliberately BEFORE the auth gate — LINE's CDN fetches without
+    // credentials; unguessable keys (96-bit random + content hash) are the
+    // access control here.
+    if (handleImageHostRequest(req, res)) return;
 
     // Route only the MCP path; everything else 404.
     if (req.url !== path) {

@@ -15,6 +15,8 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { IMAGEMAP_BASE_WIDTH } from "../constants.js";
+import { TH } from "../i18n/th.js";
+import { imageStore } from "../imagehost/store.js";
 import { buildImagemapMessage, type ImagemapInput } from "../line/imagemap-builder.js";
 
 const BoundsSchema = z
@@ -71,12 +73,20 @@ const VideoSchema = z
 
 const InputSchema = z
   .object({
+    prepared_key: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        "RECOMMENDED path: key from line_prepare_image (purpose 'imagemap'). base_url and base_height are filled in automatically from the prepared image.",
+      ),
     base_url: z
       .string()
       .url()
       .max(1000)
+      .optional()
       .describe(
-        "HTTPS base URL of the pre-hosted image set. LINE requests /1040 /700 /460 /300 /240 from it. No upload API — you must host the images yourself.",
+        "Self-hosting path: HTTPS base URL of a pre-hosted image set. LINE requests /1040 /700 /460 /300 /240 from it. Use line_prepare_image + prepared_key instead if the user has no host.",
       ),
     alt_text: z
       .string()
@@ -87,7 +97,10 @@ const InputSchema = z
       .number()
       .int()
       .positive()
-      .describe("Image height in px WHEN the width is 1040 (width is always forced to 1040)."),
+      .optional()
+      .describe(
+        "Image height in px WHEN the width is 1040. REQUIRED with base_url; ignored with prepared_key (auto-derived).",
+      ),
     areas: z
       .array(AreaSchema)
       .min(1)
@@ -105,11 +118,11 @@ export function registerDesignImagemapTool(server: McpServer): void {
       title: "Design LINE Imagemap (Rich Message)",
       description: `Build a validated Imagemap message (LINE OA Manager calls it a "Rich Message") and return it as JSON to hand to line_send_message via message.message_json. DESIGN ONLY — never calls the LINE API.
 
-Image hosting (critical): LINE has NO imagemap-image upload API — you must pre-host the image at a public HTTPS base_url, and LINE fetches sized variants \`\${base_url}/1040\`, \`/700\`, \`/460\`, \`/300\`, \`/240\` (host all, or serve the right size per suffix). Canvas width is always forced to ${IMAGEMAP_BASE_WIDTH}; you give base_height and all area coordinates in px on that ${IMAGEMAP_BASE_WIDTH}-wide canvas. areas must fit inside ${IMAGEMAP_BASE_WIDTH} × base_height. Optional video area supported.
+Image hosting — two paths: (1) RECOMMENDED: run line_prepare_image first and pass its prepared_key here (hosting + the 5 size variants + verification all handled; base_height auto-derived). (2) Self-hosted: pass base_url of a public HTTPS host serving \`\${base_url}/1040\`, \`/700\`, \`/460\`, \`/300\`, \`/240\` (LINE has NO upload API) plus base_height. Canvas width is always forced to ${IMAGEMAP_BASE_WIDTH}; all area coordinates are px on that ${IMAGEMAP_BASE_WIDTH}-wide canvas and must fit inside ${IMAGEMAP_BASE_WIDTH} × base_height. Optional video area supported.
 
 Returns { message, usage_hint }.
 
-Example: "Rich Message ครึ่งบน-ครึ่งล่าง กดไปคนละลิงก์" → { base_url:"https://cdn.example.com/promo", alt_text:"โปรเดือนนี้", base_height:1040, areas:[{bounds:{x:0,y:0,width:1040,height:520},action:{type:"uri",uri:"https://shop.example.com/a"}},{bounds:{x:0,y:520,width:1040,height:520},action:{type:"uri",uri:"https://shop.example.com/b"}}] }.`,
+Example (prepared): "ส่งรูปนี้เป็น Rich Message ครึ่งบน-ครึ่งล่าง" → line_prepare_image first, then { prepared_key:"ab12…", alt_text:"โปรเดือนนี้", areas:[{bounds:{x:0,y:0,width:1040,height:520},action:{type:"uri",uri:"https://shop.example.com/a"}},{bounds:{x:0,y:520,width:1040,height:520},action:{type:"uri",uri:"https://shop.example.com/b"}}] }. Example (self-hosted): same but { base_url:"https://cdn.example.com/promo", base_height:1040 } instead of prepared_key.`,
       inputSchema: InputSchema.shape,
       annotations: {
         readOnlyHint: true,
@@ -122,10 +135,39 @@ Example: "Rich Message ครึ่งบน-ครึ่งล่าง กด�
       try {
         const params = InputSchema.parse(raw);
 
+        // Exactly one image source: prepared_key (hosted for the user) XOR base_url (self-hosted).
+        if ((params.prepared_key ? 1 : 0) + (params.base_url ? 1 : 0) !== 1) {
+          return { isError: true, content: [{ type: "text", text: TH.imgBaseUrlOrPreparedKey }] };
+        }
+
+        let baseUrl: string;
+        let baseHeight: number;
+        if (params.prepared_key) {
+          const stored = imageStore.get(params.prepared_key);
+          const hosting = imageStore.getHosting(params.prepared_key);
+          if (!stored || !hosting) {
+            return { isError: true, content: [{ type: "text", text: TH.imgPreparedKeyNotFound(params.prepared_key) }] };
+          }
+          if (!hosting.baseUrl) {
+            return { isError: true, content: [{ type: "text", text: TH.imgPreparedNotImagemap(params.prepared_key) }] };
+          }
+          baseUrl = hosting.baseUrl;
+          // The schema documents base_height as IGNORED with prepared_key —
+          // honoring a caller-supplied value here would let a stale/mistaken
+          // number silently misalign every tap area (QC catch). Derived only.
+          baseHeight = stored.variants.baseHeight;
+        } else {
+          if (params.base_height === undefined) {
+            return { isError: true, content: [{ type: "text", text: TH.imgBaseHeightRequired }] };
+          }
+          baseUrl = params.base_url!;
+          baseHeight = params.base_height;
+        }
+
         const builderInput: ImagemapInput = {
-          base_url: params.base_url,
+          base_url: baseUrl,
           alt_text: params.alt_text,
-          base_height: params.base_height,
+          base_height: baseHeight,
           areas: params.areas.map((a) => ({
             bounds: a.bounds,
             action:
@@ -160,12 +202,13 @@ Example: "Rich Message ครึ่งบน-ครึ่งล่าง กด�
 
         const output = {
           message,
-          usage_hint:
-            "ส่งด้วย line_send_message โดยส่ง message object นี้ตรงๆ (raw passthrough). อย่าลืม host รูปที่ base_url ให้ LINE ดึงได้ทั้ง /1040 /700 /460 /300 /240",
+          usage_hint: params.prepared_key
+            ? "ส่งด้วย line_send_message โดยส่ง message object นี้ตรงๆ (message_json) — รูปถูกโฮสต์และตรวจครบ 5 ขนาดแล้ว ส่งได้ทันที"
+            : "ส่งด้วย line_send_message โดยส่ง message object นี้ตรงๆ (raw passthrough). อย่าลืม host รูปที่ base_url ให้ LINE ดึงได้ทั้ง /1040 /700 /460 /300 /240",
         };
 
-        const text = `✅ สร้าง Imagemap (Rich Message) แล้ว — ${params.areas.length} พื้นที่กดได้ (ฐาน ${IMAGEMAP_BASE_WIDTH}×${params.base_height})
-ℹ️ ต้อง host รูปเองที่ base_url (LINE ดึง /1040 /700 /460 /300 /240) แล้วส่งต่อด้วย line_send_message
+        const text = `✅ สร้าง Imagemap (Rich Message) แล้ว — ${params.areas.length} พื้นที่กดได้ (ฐาน ${IMAGEMAP_BASE_WIDTH}×${baseHeight})
+${params.prepared_key ? "ℹ️ รูปโฮสต์ผ่าน line_prepare_image แล้ว — ส่งต่อด้วย line_send_message ได้เลย" : "ℹ️ ต้อง host รูปเองที่ base_url (LINE ดึง /1040 /700 /460 /300 /240) แล้วส่งต่อด้วย line_send_message"}
 
 \`\`\`json
 ${JSON.stringify(message, null, 2)}

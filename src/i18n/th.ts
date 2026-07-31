@@ -178,4 +178,44 @@ export const TH = {
     `✅ Rich Menu ขึ้นระบบแล้ว\n- ID: \`${richMenuId}\`\n- พื้นที่กด: ${areas} จุด (ตรงกับภาพ 100%)${
       setDefault ? "\n- ตั้งเป็นเมนู default ของ OA แล้ว" : "\n- ยังไม่ตั้งเป็น default (ใช้ line_set_default_rich_menu ได้ทีหลัง)"
     }${alias ? `\n- Alias: ${alias}` : ""}`,
+
+  // ---- v2.2 Image Hosting Layer (line_prepare_image) ----
+
+  imgPreparedReady: (provider: string, baseUrl: string, hours: number, verifiedScope: string) =>
+    `✅ เตรียมรูปเรียบร้อย — ตรวจแล้วว่า LINE ดึงได้${verifiedScope}\n- โฮสต์ผ่าน: ${provider === "local-tunnel" ? "สะพานชั่วคราวบนเครื่องนี้ (cloudflared)" : provider === "self" ? "เซิร์ฟเวอร์ของคุณเอง" : provider}\n- base_url: ${baseUrl}\n- อายุโฮสต์: ~${hours} ชม. และเฉพาะตอนที่โปรแกรมนี้ยังเปิดอยู่\n⏰ สำคัญ (พิสูจน์จริง): LINE จะมาดึงรูปตอนที่ผู้รับ "เปิดอ่านครั้งแรก" ไม่ใช่ตอนส่ง — เปิดเครื่องและโปรแกรมนี้ทิ้งไว้จนกว่าลูกค้าส่วนใหญ่จะเปิดอ่าน รูปที่ถูกเปิดแล้วจะอยู่ถาวรแม้ปิดเครื่อง`,
+
+  imgPreparedNextStep: (preparedKey: string, purpose: string) =>
+    purpose === "imagemap"
+      ? `ขั้นต่อไป: เรียก line_design_imagemap โดยใส่ prepared_key: "${preparedKey}" (ไม่ต้องใส่ base_url และไม่ต้องใส่ base_height — ระบบรู้เอง) แล้วส่งผลลัพธ์ด้วย line_send_message`
+      : `ขั้นต่อไป: เรียก line_send_message โดยใส่ message: { image: { prepared_key: "${preparedKey}" } }`,
+
+  imgHandoffReady: (zipPath: string, reasons: string) =>
+    `🧰 เปิดโฮสต์อัตโนมัติไม่ได้ในสภาพแวดล้อมนี้ — เตรียม "แพ็กเกจทำเอง" ให้แทนเรียบร้อยแล้ว\n- ไฟล์ zip: ${zipPath} (ข้างในมีรูปครบ 5 ขนาด ชื่อไฟล์ตรงตามที่ LINE ต้องการเป๊ะ)\n- สาเหตุที่อัตโนมัติไม่ได้: ${reasons}\nทำตามขั้นตอนด้านล่างได้เลย ใช้เวลาประมาณ 1 นาที:`,
+
+  imgPreparedKeyNotFound: (key: string) =>
+    `❓ ไม่พบ prepared_key "${key}" — คีย์อาจหมดอายุ หรือโปรแกรมถูกปิด-เปิดใหม่หลังจากเตรียมรูปไว้ (คีย์อยู่ในหน่วยความจำ ไม่ข้ามการรีสตาร์ต)\n→ เรียก line_prepare_image กับรูปเดิมอีกครั้ง แล้วใช้คีย์ใหม่ที่ได้`,
+
+  imgPreparedNotImagemap: (key: string) =>
+    `❌ prepared_key "${key}" ไม่มี base_url สำหรับ Rich Message — อาจถูกเตรียมเป็นแพ็กเกจทำเอง (handoff) หรือยังโฮสต์อัตโนมัติไม่สำเร็จ\n→ ถ้าได้ zip ไป: host ตามคู่มือแล้วเรียก tool นี้ด้วย base_url แทน\n→ หรือเรียก line_prepare_image ใหม่อีกครั้งเพื่อให้ระบบลองเปิดช่องทางโฮสต์อีกรอบ`,
+
+  imgExactlyOneSource:
+    '❌ ต้องระบุแหล่งรูปเพียง 1 อย่าง: file_path (ไฟล์ในเครื่อง) หรือ base64 (เนื้อไฟล์) หรือ source_url (ลิงก์ https สาธารณะ)',
+
+  imgBaseUrlOrPreparedKey:
+    '❌ ต้องระบุอย่างใดอย่างหนึ่ง: prepared_key (จาก line_prepare_image — แนะนำ) หรือ base_url (โฮสต์รูปเองครบ 5 ขนาด) — ห้ามใส่ทั้งคู่',
+
+  imgBaseHeightRequired:
+    "❌ เมื่อใช้ base_url ต้องระบุ base_height ด้วย (ความสูงของรูปเมื่อกว้าง 1040px) — ถ้าไม่อยากคำนวณเอง ใช้ line_prepare_image แล้วส่ง prepared_key แทน",
+
+  imgPreparedNoImageUrls: (key: string) =>
+    `❌ prepared_key "${key}" ยังไม่มี URL รูปที่ส่งได้ — คีย์นี้ถูกเตรียมเป็นแพ็กเกจทำเอง (handoff) เพราะเปิดโฮสต์อัตโนมัติไม่ได้ในเครื่องนี้\n→ ถ้าได้ zip ไป: host รูปตามคู่มือในแพ็กเกจ แล้วเรียก line_send_message ด้วย image: { original_content_url, preview_image_url } แทน\n→ หรือเรียก line_prepare_image ใหม่เฉพาะเมื่อสภาพแวดล้อมเปลี่ยนแล้ว (เช่น ตั้ง MCP_PUBLIC_URL หรือเครือข่ายเลิกบล็อก) — เรียกซ้ำเฉยๆ จะได้ผลเดิม`,
+
+  imgHandoffImageMessageNote:
+    'หมายเหตุ: งานนี้เป็น "รูปภาพธรรมดา" ไม่ใช่ Rich Message — หลัง host รูปแล้ว ไม่ต้องเรียก line_design_imagemap ให้เรียก line_send_message โดยใส่ message: { image: { original_content_url: "<base_url>/1040", preview_image_url: "<base_url>/240" } } แทน (หรือง่ายสุด: แนบรูปส่งจากหน้า LINE OA Manager ตามวิธีที่ 1)',
+
+  // Actionable hints per ImageHostError reason (appended under the error line).
+  imgHintTooLarge: "\n→ ย่อรูปให้เล็กลง (ไฟล์ ≤10MB และไม่เกิน ~60 ล้านพิกเซล) แล้วลองใหม่",
+  imgHintUnsupported: "\n→ ใช้ไฟล์ PNG หรือ JPEG เท่านั้น (HEIC/WebP ต้องแปลงก่อน)",
+  imgHintStoreFull: "\n→ พื้นที่พักรูปเต็ม — รอสักครู่หรือรีสตาร์ต MCP แล้วลองใหม่",
+  imgHintGeneric: "\n→ ใช้ line_image_host_status ตรวจว่าช่องทางไหนพร้อมใช้บ้าง",
 } as const;

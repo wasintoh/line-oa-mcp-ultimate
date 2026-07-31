@@ -11,7 +11,7 @@
  *
  * MyShop tools register ONLY when a key exists — so the whole group boots with
  * LINE_MYSHOP_API_KEY set BEFORE createTestMcp(). A dedicated "gating" describe
- * proves graceful degradation (35 tools without the key, 49 with it).
+ * proves graceful degradation (37 tools without the key, 51 with it).
  *
  * Fetch-mock routing is SUBSTRING based, first-match-in-registration-order — the
  * more specific path must be registered BEFORE the shorter one.
@@ -57,21 +57,21 @@ function lastApiKey(): string | undefined {
 // Registration gating (graceful degradation)
 // ============================================================================
 describe("MyShop registration gating", () => {
-  it("without a MyShop key: 35 messaging tools and NO shopping tools", async () => {
+  it("without a MyShop key: 37 messaging tools and NO shopping tools", async () => {
     await boot(() => useSingleOaEnv("plain-token"));
     const { tools } = await mcp.client.listTools();
     const names = tools.map((t) => t.name);
-    expect(tools.length).toBe(35);
+    expect(tools.length).toBe(37);
     expect(names).not.toContain("line_list_products");
     expect(names).not.toContain("line_create_checkout_link");
     expect(names).not.toContain("line_cancel_order");
   });
 
-  it("with a MyShop key (env): 49 tools incl. the 14 shopping tools", async () => {
+  it("with a MyShop key (env): 51 tools incl. the 14 shopping tools", async () => {
     await boot(myShopEnv);
     const { tools } = await mcp.client.listTools();
     const names = tools.map((t) => t.name);
-    expect(tools.length).toBe(49); // 35 messaging + 14 MyShop
+    expect(tools.length).toBe(51); // 37 messaging + 14 MyShop
     for (const t of [
       "line_list_products",
       "line_create_product",

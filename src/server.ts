@@ -77,13 +77,18 @@ import { registerCreateCheckoutLinkTool } from "./tools/create-checkout-link.js"
 // (satori/resvg) inside the handler, so registering it costs ~nothing.
 import { registerDesignRichMenuImageTool } from "./tools/design-rich-menu-image.js";
 
+// v2.2 — Image Hosting Layer: prepare (resize + host + verify) any image for
+// sending, plus a read-only status probe of the provider chain.
+import { registerPrepareImageTool } from "./tools/prepare-image.js";
+import { registerImageHostStatusTool } from "./tools/image-host-status.js";
+
 export function buildServer(): McpServer {
   const server = new McpServer({
     name: SERVER_NAME,
     version: SERVER_VERSION,
   });
 
-  // ---- Tools (35 messaging + 14 MyShop opt-in = 49 total) ----
+  // ---- Tools (37 messaging + 14 MyShop opt-in = 51 total) ----
 
   // A. Messaging
   registerSendMessageTool(server);
@@ -163,6 +168,10 @@ export function buildServer(): McpServer {
 
   // K. Rich Menu Studio (v2.1)
   registerDesignRichMenuImageTool(server);
+
+  // L. Image Hosting Layer (v2.2)
+  registerPrepareImageTool(server);
+  registerImageHostStatusTool(server);
 
   // ---- Resources + Prompts ----
   registerResources(server);
