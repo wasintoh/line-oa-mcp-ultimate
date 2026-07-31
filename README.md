@@ -340,9 +340,9 @@ This server operates with **live channel access tokens** — whoever holds the t
 
 ## Versioning
 
-This project follows [Semantic Versioning](https://semver.org/). Current release: **v2.1.0 "Trust Release"** — full history in [CHANGELOG.md](CHANGELOG.md).
+This project follows [Semantic Versioning](https://semver.org/). Current release: **v2.2.0 "Zero-Hosting Release"** — full history in [CHANGELOG.md](CHANGELOG.md).
 
-Latest changes (v2.1.0): **Rich Menu Studio** (`line_design_rich_menu_image` — generate rich-menu images with no headless browser, preview before deploy), **HTTP bearer auth** (`MCP_HTTP_TOKEN`), a published security policy ([SECURITY.md](SECURITY.md)), CI/CD with npm **provenance**, and a much larger test suite with a coverage gate enforced in CI. See [CHANGELOG.md](CHANGELOG.md).
+Latest changes (v2.2.0): **Image Hosting Layer** — attach a picture and `line_prepare_image` resizes it to every size LINE needs, hosts it automatically (own server / quick tunnel / manual-package fallback), and verifies every size is reachable **before** ever reporting success; `line_image_host_status` gives a read-only health check. See [CHANGELOG.md](CHANGELOG.md).
 
 Previously (v2.0.0): **+14 LINE Shopping tools** via the MyShop Open API — products, inventory, orders (incl. parcel labels), settlements, and checkout links. API-key only, no webhook/server, fully **opt-in** (registers only when a MyShop key is set) and **non-breaking** on the 34 messaging tools. See [RELEASE_NOTES_v2.0.0.md](RELEASE_NOTES_v2.0.0.md).
 
@@ -355,6 +355,7 @@ Previously (v1.1.0): +10 tools completing LINE's token-only Messaging API surfac
 - **v1.x** — Full token-only Messaging API coverage: outbound + rich-menu lifecycle + Rich/Card message builders + audiences + insights + coupons.
 - **v2.0** — ✅ **LINE Shopping (MyShop Open API)** shipped — products, inventory, orders, parcel labels, settlements, and checkout links (API-key only, no webhook). See [RELEASE_NOTES_v2.0.0.md](RELEASE_NOTES_v2.0.0.md).
 - **v2.1** — ✅ **"Trust Release"** shipped — Rich Menu Studio (image generation + preview), HTTP bearer auth, security policy + hardening, CI/CD with provenance, coverage-gated test suite. See [CHANGELOG.md](CHANGELOG.md).
+- **v2.2** — ✅ **"Zero-Hosting Release"** shipped — attach a picture, say send: auto-resize to all 5 Rich Message sizes, automatic hosting (own server / quick tunnel / manual package — nobody dead-ends), every size verified reachable before success. See [CHANGELOG.md](CHANGELOG.md).
 
 Future direction is guided by real-world usage and community feedback.
 
