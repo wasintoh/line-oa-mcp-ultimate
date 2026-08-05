@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/wasintoh/line-oa-mcp-ultimate/main/docs/brand/logo-v22-tagline.png" alt="<OA/> MCP Ultimate 2.2 — MCP server for LINE Official Account" width="720">
+<img src="https://raw.githubusercontent.com/wasintoh/line-oa-mcp-ultimate/main/docs/brand/logo-v221-tagline.png" alt="<OA/> MCP Ultimate 2.2.1 — MCP server for LINE Official Account" width="720">
 
 # LINE OA MCP Ultimate
 
