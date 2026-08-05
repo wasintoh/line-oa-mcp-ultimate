@@ -6,6 +6,8 @@
 
 **Operate your LINE Official Account from any AI agent — through natural language.**
 
+🛠️ **Fixed in 2.2.1:** run the MCP on your own server and point any AI agent at one URL — it now holds up through real sessions and full broadcasts (no more instant "Internal server error" in HTTP mode), and hosted pictures now cache properly, so thousands of customers opening your broadcast at once barely touch your machine. Thanks to a production field report by [Norapat Limpagan](https://www.facebook.com/kidsmagic)! 🙏
+
 🖼️ **New in 2.2:** attach a picture, say *"send this as a Rich Message"* — and it appears in your customers' chats. No hosting. No image resizing. No setup.
 
 [![CI](https://github.com/wasintoh/line-oa-mcp-ultimate/actions/workflows/test.yml/badge.svg)](https://github.com/wasintoh/line-oa-mcp-ultimate/actions/workflows/test.yml)
