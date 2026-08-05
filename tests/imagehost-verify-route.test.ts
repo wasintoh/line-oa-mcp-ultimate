@@ -200,9 +200,72 @@ describe("handleImageHostRequest", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("image/png");
     expect(res.headers.get("content-length")).toBe(String(PNG_BYTES.length));
-    expect(res.headers.get("cache-control")).toBe("public, max-age=86400");
+    // v2.2.1: bytes per key never change (content-hash + random key), so the
+    // route promises immutable caching and a validator.
+    expect(res.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+    expect(res.headers.get("etag")).toBe(`"${key}/1040"`);
     const body = Buffer.from(await res.arrayBuffer());
     expect(body.equals(PNG_BYTES)).toBe(true);
+  });
+
+  it("GET with a matching If-None-Match returns 304 with no body (and keeps the cache headers)", async () => {
+    const key = seedStore();
+    const base = await startServer();
+
+    const res = await fetch(`${base}/i/${key}/700`, {
+      headers: { "if-none-match": `"${key}/700"` },
+    });
+    expect(res.status).toBe(304);
+    expect(res.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+    expect(res.headers.get("etag")).toBe(`"${key}/700"`);
+    const body = await res.arrayBuffer();
+    expect(body.byteLength).toBe(0);
+  });
+
+  it("HEAD with a matching If-None-Match returns 304", async () => {
+    const key = seedStore();
+    const base = await startServer();
+
+    const res = await fetch(`${base}/i/${key}/240`, {
+      method: "HEAD",
+      headers: { "if-none-match": `"${key}/240"` },
+    });
+    expect(res.status).toBe(304);
+  });
+
+  it("GET with a NON-matching If-None-Match returns the full 200 (conditional-only 304)", async () => {
+    // verify.ts counts only 200/206 as success — a sloppy always-304 would
+    // flip verification to "failed" and tear down a healthy tunnel.
+    const key = seedStore();
+    const base = await startServer();
+
+    const res = await fetch(`${base}/i/${key}/1040`, {
+      headers: { "if-none-match": '"someone-elses-etag/1040"' },
+    });
+    expect(res.status).toBe(200);
+    const body = Buffer.from(await res.arrayBuffer());
+    expect(body.equals(PNG_BYTES)).toBe(true);
+  });
+
+  it("the ETag is per size — one size's validator does not 304 another size", async () => {
+    const key = seedStore();
+    const base = await startServer();
+
+    const res = await fetch(`${base}/i/${key}/1040`, {
+      headers: { "if-none-match": `"${key}/700"` },
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it("an expired key returns 404 even with a matching If-None-Match (store is the source of truth)", async () => {
+    const key = seedStore();
+    const base = await startServer();
+    imageStore.clear(); // simulate expiry/eviction
+
+    const res = await fetch(`${base}/i/${key}/1040`, {
+      headers: { "if-none-match": `"${key}/1040"` },
+    });
+    expect(res.status).toBe(404);
   });
 
   it("HEAD hit returns 200 with content-length and an empty body", async () => {

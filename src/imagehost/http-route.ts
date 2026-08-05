@@ -58,10 +58,35 @@ export function handleImageHostRequest(req: IncomingMessage, res: ServerResponse
       return true;
     }
 
+    // Caching contract (v2.2.1): a key's bytes can NEVER change — keys are
+    // content-hash + 96-bit random, minted fresh on every prepare — so
+    // `immutable` + a long max-age is semantically exact. Recipient devices
+    // fetch a picture once and never revalidate; reverse proxies / CDNs may
+    // cache for the whole send window. The ETag is per (key, size): each size
+    // variant has different bytes, and the URL already carries both parts.
+    //
+    // Two rules that MUST hold (tests enforce them):
+    //   1. Only answer 304 to a MATCHING If-None-Match. verify.ts probes with
+    //      unconditional HEAD/GET and counts only 200/206 as success — an
+    //      unconditional 304 would flip verification to "failed" and tear
+    //      down a healthy tunnel.
+    //   2. Read the conditional header only AFTER the store lookup: expired
+    //      or evicted keys must keep answering 404 (the store is the source
+    //      of truth for liveness), and the direct-handler tests hand in
+    //      requests without a headers object.
+    const cacheControl = "public, max-age=31536000, immutable";
+    const etag = `"${key}/${size}"`;
+    if (req.headers["if-none-match"] === etag) {
+      res.writeHead(304, { "Cache-Control": cacheControl, ETag: etag });
+      res.end();
+      return true;
+    }
+
     res.writeHead(200, {
       "Content-Type": "image/png",
       "Content-Length": bytes.length,
-      "Cache-Control": "public, max-age=86400",
+      "Cache-Control": cacheControl,
+      ETag: etag,
     });
     if (method === "HEAD") {
       res.end();
