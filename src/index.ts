@@ -54,19 +54,22 @@ async function main(): Promise<void> {
   }
 
   const transport = pickTransport();
-  const server = buildServer();
 
   if (transport === "stdio") {
+    const server = buildServer();
     const t = new StdioServerTransport();
     await server.connect(t);
     console.error(`[${SERVER_NAME}] Ready (stdio).`);
     return;
   }
 
-  // ---- HTTP mode (Streamable HTTP — stateless per-request) ----
-  // All server mechanics (Bearer auth via MCP_HTTP_TOKEN, loopback-bind
-  // enforcement, origin check, /health, graceful shutdown) live in http.ts.
-  await startHttpServer(server, {
+  // ---- HTTP mode (Streamable HTTP — stateless, per-request server) ----
+  // http.ts builds a FRESH McpServer for every request (the official SDK
+  // stateless pattern): a single shared instance throws "Already connected
+  // to a transport" the moment a real client overlaps requests (v2.2.0 bug).
+  // Auth (MCP_HTTP_TOKEN), loopback-bind enforcement, origin check, /health,
+  // and graceful shutdown all live in http.ts.
+  await startHttpServer(buildServer, {
     host: process.env.MCP_HTTP_HOST ?? "127.0.0.1",
     port: parseInt(process.env.MCP_HTTP_PORT ?? "3000", 10),
     path: process.env.MCP_HTTP_PATH ?? "/mcp",

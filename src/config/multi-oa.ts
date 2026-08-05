@@ -73,6 +73,14 @@ export function useOa(oaId: string): OaConfig {
   return oa;
 }
 
+/**
+ * Currently active OA id set via useOa(), or null when no switch happened.
+ * Read-only view for diagnostics/guards (e.g. the HTTP multi-client tripwire).
+ */
+export function activeOaId(): string | null {
+  return _activeOaId;
+}
+
 /** Resolve the OA config to use for a tool call (explicit > active > default). */
 export function resolveOa(oaIdArg?: string): { id: string; config: OaConfig } {
   const cfg = getConfig();

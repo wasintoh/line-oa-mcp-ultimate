@@ -13,6 +13,25 @@
  *   - `/health` stays open in all modes and returns no secrets.
  *   - Origin-header allowlist (DNS-rebinding protection) as before.
  *
+ * Concurrency model (v2.2.1):
+ *   - STATELESS, one McpServer + one transport PER REQUEST — the official SDK
+ *     stateless pattern. v2.2.0 shared a single McpServer across per-request
+ *     transports; the SDK allows exactly one transport per server, so any
+ *     overlapping request (a real client holds a GET stream while POSTing)
+ *     threw "Already connected to a transport" → 500. Building the server
+ *     fresh costs ~1ms per request (measured), far below the HTTP round-trip.
+ *   - The MCP path speaks POST only. GET would park a server-push SSE stream
+ *     per client; vanished peers (NAT timeout, closed laptop) never fire
+ *     'close', so parked streams accumulate sockets + servers on a long-lived
+ *     VPS. No tool here sends server-initiated notifications, so we answer
+ *     405 (the SDK's own stateless example does the same, and clients treat
+ *     it as "no push channel" per spec). DELETE is session teardown — there
+ *     are no sessions.
+ *   - Cross-request state (active OA, prepared images, config) lives at
+ *     module level and is deliberately SHARED by all per-request servers.
+ *     That also means it is shared by all CLIENTS of one instance — see the
+ *     multi-client tripwire below and SECURITY.md known-limitation #4.
+ *
  * IMPORTANT: diagnostics only via console.error (stdout is reserved for the
  * MCP protocol in stdio mode; we keep the discipline everywhere).
  */
@@ -26,6 +45,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
 import { SERVER_NAME, SERVER_VERSION } from "./constants.js";
+import { activeOaId } from "./config/multi-oa.js";
 import { TH } from "./i18n/th.js";
 import { handleImageHostRequest } from "./imagehost/http-route.js";
 import { registerSelfHost } from "./imagehost/providers/self.js";
@@ -78,13 +98,51 @@ function tokenMatches(provided: string, expected: string): boolean {
   return timingSafeEqual(a, b);
 }
 
+// ---- Multi-client tripwire (warn-only; per-session isolation is a v2.3 item) ----
+//
+// The active OA set by `line_use_oa` is process-wide module state. With one
+// agent per instance that is exactly the UX we want; with SEVERAL clients on
+// one instance, client A's switch silently retargets client B's next
+// unqualified send — and a broadcast cannot be unsent. We cannot isolate
+// state without sessions, but we CAN notice a second distinct client
+// initializing while a switch is active, and shout about it in the log.
+const seenClientIds = new Set<string>();
+
+function trackClientInitialize(body: unknown): void {
+  if (typeof body !== "object" || body === null) return;
+  const b = body as {
+    method?: unknown;
+    params?: { clientInfo?: { name?: unknown; version?: unknown } };
+  };
+  if (b.method !== "initialize") return;
+  const info = b.params?.clientInfo;
+  const name = typeof info?.name === "string" ? info.name : "unknown-client";
+  const version = typeof info?.version === "string" ? info.version : "?";
+  const id = `${name}@${version}`;
+  const active = activeOaId();
+  if (active !== null && seenClientIds.size > 0 && !seenClientIds.has(id)) {
+    console.error(`[${SERVER_NAME}] ${TH.httpMultiClientWarning(id, active)}`);
+  }
+  // Bounded: ids are tiny strings from authenticated clients only, but a
+  // client baking a changing build id into its version string would
+  // otherwise grow this set for the life of a long-running process.
+  if (seenClientIds.size < 100) seenClientIds.add(id);
+}
+
+/** TEST-ONLY seam — reset the multi-client tripwire between tests. */
+export function __resetHttpClientTrackingForTests(): void {
+  seenClientIds.clear();
+}
+
 /**
- * Start the Streamable HTTP server for an already-built MCP server.
- * Resolves once listening. Throws (with a Thai console.error) when a
- * non-loopback bind is attempted without an auth token.
+ * Start the Streamable HTTP server. `buildServerFn` is called once per
+ * incoming MCP request to create a fresh McpServer (see the concurrency
+ * model in the file header — a shared instance cannot serve overlapping
+ * requests). Resolves once listening. Throws (with a Thai console.error)
+ * when a non-loopback bind is attempted without an auth token.
  */
 export async function startHttpServer(
-  server: McpServer,
+  buildServerFn: () => McpServer,
   opts: StartHttpServerOptions = {},
 ): Promise<RunningHttpServer> {
   const host = opts.host ?? "127.0.0.1";
@@ -162,38 +220,81 @@ export async function startHttpServer(
       }
     }
 
-    // Read body (Node http does not parse JSON for us).
-    let body: unknown = undefined;
-    if (req.method === "POST") {
-      const chunks: Buffer[] = [];
-      for await (const c of req) chunks.push(c as Buffer);
-      const raw = Buffer.concat(chunks).toString("utf8");
-      if (raw) {
-        try {
-          body = JSON.parse(raw);
-        } catch {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Invalid JSON" }));
-          return;
-        }
-      }
+    // ---- Method gate: this stateless JSON endpoint speaks POST only ----
+    // GET would ask the SDK transport to open a server-push SSE stream per
+    // client. Real clients auto-open that stream, and peers that vanish
+    // without FIN (NAT timeout, closed laptop) never fire 'close' — parked
+    // streams would pile up sockets + per-request servers on a long-running
+    // VPS. No tool here pushes server-initiated notifications, so we answer
+    // 405 like the SDK's own stateless example; clients treat it as "no push
+    // channel" per spec. DELETE is session teardown — there are no sessions.
+    if (req.method !== "POST") {
+      res.writeHead(405, { "Content-Type": "application/json", Allow: "POST" });
+      res.end(
+        JSON.stringify({ error: "Method not allowed — this stateless MCP endpoint speaks POST only" }),
+      );
+      return;
     }
 
-    // One transport per request (stateless mode — recommended by MCP docs).
-    const t = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined,
-      enableJsonResponse: true,
-    });
-    res.on("close", () => {
-      t.close().catch(() => {
-        /* ignore */
-      });
-    });
     try {
+      // Read body (Node http does not parse JSON for us). The read lives
+      // INSIDE the try: a client vanishing mid-body (NAT reset, mobile
+      // drop) rejects this await — unhandled, that rejection would kill
+      // the whole process (verified live; pre-existing before v2.2.1).
+      let body: unknown = undefined;
+      {
+        const chunks: Buffer[] = [];
+        for await (const c of req) chunks.push(c as Buffer);
+        const raw = Buffer.concat(chunks).toString("utf8");
+        if (raw) {
+          try {
+            body = JSON.parse(raw);
+          } catch {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "Invalid JSON" }));
+            return;
+          }
+        }
+      }
+
+      // Warn-only guard: a SECOND distinct client initializing while an OA
+      // switch is active is one unqualified send away from broadcasting as
+      // the wrong shop.
+      trackClientInitialize(body);
+
+      // One fresh McpServer + one transport per request (SDK stateless
+      // pattern). Also inside the try: buildServerFn() reads config and
+      // throws when none exists (embedders/tests may call startHttpServer
+      // without the eager config load that index.ts performs).
+      const server = buildServerFn();
+      const t = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined,
+        enableJsonResponse: true,
+      });
+      // Reclaim BOTH on response close — close() is idempotent in SDK 1.29,
+      // and nothing else references the pair, so the whole per-request graph
+      // is collectable afterwards.
+      res.on("close", () => {
+        t.close().catch(() => {
+          /* ignore */
+        });
+        server.close().catch(() => {
+          /* ignore */
+        });
+      });
       await server.connect(t);
       await t.handleRequest(req, res, body);
     } catch (err) {
-      console.error(redactSecrets(`[${SERVER_NAME}] HTTP request error: ${describe(err)}`));
+      const clientVanished =
+        err instanceof Error &&
+        (err.message === "aborted" || (err as NodeJS.ErrnoException).code === "ECONNRESET");
+      if (clientVanished) {
+        // Routine on long-lived deployments (NAT reset, mobile drop) — one
+        // quiet line, not a stack trace.
+        console.error(`[${SERVER_NAME}] HTTP client disconnected mid-request`);
+      } else {
+        console.error(redactSecrets(`[${SERVER_NAME}] HTTP request error: ${describe(err)}`));
+      }
       if (!res.headersSent) {
         res.writeHead(500, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Internal server error" }));

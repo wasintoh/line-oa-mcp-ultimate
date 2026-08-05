@@ -196,6 +196,28 @@ describe("invalid config shapes", () => {
   });
 });
 
+describe("cross-instance — active OA is module state, not server state", () => {
+  it("a switch made through one server instance is visible from a fresh instance", async () => {
+    // This is the load-bearing semantic of HTTP mode after v2.2.1: every HTTP
+    // request gets a brand-new McpServer, and line_use_oa must still carry
+    // across. Two independent in-memory servers model exactly that.
+    useConfigFile(twoOaConfig());
+    const a = await createTestMcp();
+    const b = await createTestMcp();
+    try {
+      const switched = await a.callTool("line_use_oa", { oa_id: "shop2" });
+      expect(switched.isError).toBeFalsy();
+
+      const listed = await b.callTool("line_list_oas", {});
+      expect(listed.isError).toBeFalsy();
+      expect(listed.structuredContent).toMatchObject({ active_oa: "shop2" });
+    } finally {
+      await a.close();
+      await b.close();
+    }
+  });
+});
+
 describe("E2E — line_use_oa switches the Bearer token on subsequent sends", () => {
   let api: FetchMock;
   let mcp: TestMcp;

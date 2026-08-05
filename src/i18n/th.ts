@@ -96,6 +96,9 @@ export const TH = {
   httpPublicBindNeedsToken: (host: string) =>
     `🛑 ปฏิเสธการเปิด HTTP server บน "${host}" — การ bind นอก loopback (127.0.0.1 / ::1 / localhost) โดยไม่ตั้ง MCP_HTTP_TOKEN จะเปิดให้ทุกคนในเครือข่ายสั่ง broadcast ในนามร้านได้ทันที. ตั้ง env MCP_HTTP_TOKEN แล้วเริ่มใหม่ หรือ bind ที่ 127.0.0.1 แล้ววาง reverse proxy (TLS + auth) ไว้ข้างหน้า`,
 
+  httpMultiClientWarning: (client: string, activeOa: string) =>
+    `⚠️ ตรวจพบ MCP client ตัวใหม่ ("${client}") ต่อเข้ามาขณะที่ instance นี้ถูกสลับร้านค้างไว้ที่ "${activeOa}" — active OA เป็นค่าเดียวร่วมกันทั้ง process ถ้าหลาย agent ใช้ instance เดียวกัน ข้อความอาจถูกส่งออกผิดร้านโดยไม่มีใครรู้ตัว. กติกา: 1 instance = 1 agent (แยก port คนละ instance) หรือระบุ \`oa\` ชัดๆ ทุกครั้งที่เรียก tool`,
+
   // Config file permissions
   configFilePermissionWarning: (path: string) =>
     `⚠️ ไฟล์ config ${path} เปิดสิทธิ์ให้ผู้ใช้อื่นบนเครื่องอ่านได้ — ข้างในมี channel access token ที่ใช้ส่งข้อความหาลูกค้าทุกคนของร้านได้. แนะนำรัน: chmod 600 ${path}`,
