@@ -36,15 +36,18 @@ dead-ends.**
 ## The one rule to remember
 
 **LINE fetches the image when each recipient *first opens* the message — not at
-send time.** (Live-verified 2026-07-31: an unopened message's image dies with its
-host; an opened one survives host shutdown and even a device restart.)
+send time.** And the fetcher is each recipient's **own device**, pulling straight
+from your machine (one screen-fitting size per device) — there is no central
+LINE cache filling in for you. (Live-verified 2026-07-31; fetcher identity
+confirmed from production access logs, 2026-08-05.)
 
 So:
 
 - ⏰ Keep your machine and the MCP running until your audience has opened the
   message. The built-in **24-hour keep-alive** covers a normal broadcast day.
-- ✅ Once a customer has opened it, LINE serves the image from its own cache
-  forever — shutting down afterwards affects nobody who already looked.
+- ✅ Once a customer has opened it, their device keeps the image permanently —
+  shutting down afterwards affects nobody who already looked. Each customer's
+  *first* open, though, needs your host alive at that moment.
 - ⚠️ Customers who first open *after* hosting ended will see "image unavailable".
 - 📌 Big or long-running campaigns where you can't keep a machine on: use a
   permanent host and pass `base_url` the classic way, or deploy the MCP in HTTP
@@ -90,5 +93,60 @@ drive the full prepare → design → send pipeline.
 
 > ℹ️ The quick-tunnel route uses TryCloudflare — a free development service with no
 > SLA. It only needs to survive until your audience opens the message (hours, not
-> months); after that LINE's cache takes over permanently, which is exactly the
-> window it's suited for.
+> months); after that each opened device keeps its copy permanently, which is
+> exactly the window it's suited for.
+
+### Scaling & caching behind a reverse proxy
+
+A broadcast to N followers means up to N direct image fetches against your
+server — one per recipient device, arriving as a wave when push notifications
+land. Since v2.2.1 every `/i/` response carries
+`Cache-Control: public, max-age=31536000, immutable` plus an `ETag`, so a
+standard reverse proxy can absorb that wave for you (the bytes behind a key
+never change, so aggressive caching is always safe):
+
+```nginx
+# The MCP listens on plain HTTP on loopback — nginx terminates TLS.
+proxy_cache_path /var/cache/nginx/line-oa-img levels=1:2
+                 keys_zone=lineimg:10m max_size=512m
+                 inactive=7d use_temp_path=off;
+
+server {
+  listen 443 ssl;
+  server_name img.example.com;
+  # certbot fills these two lines in automatically (or paste the location
+  # block into an existing TLS-enabled server block):
+  ssl_certificate     /etc/letsencrypt/live/img.example.com/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/img.example.com/privkey.pem;
+
+  location /i/ {
+    proxy_pass http://127.0.0.1:3000;   # plain http — the MCP has no TLS of its own
+    proxy_set_header Host $host;
+    proxy_cache lineimg;
+    proxy_cache_lock on;                # a broadcast wave hits the MCP once per image
+    proxy_cache_use_stale error timeout updating;
+    add_header X-Cache-Status $upstream_cache_status;
+  }
+  # Proxying /mcp itself (auth + Origin allowlist) is covered in
+  # http-transport.md — and never cache /mcp.
+}
+```
+
+Operator notes:
+
+- **Cloudflare in front:** by default the edge only *proxies* the extensionless
+  `/i/` path — it does not cache it. Add a Cache Rule for `/i/*` ("Eligible for
+  cache") to get real edge offload; the immutable `Cache-Control` then does the
+  rest.
+- **Proxy caching trades away the RAM-only posture.** The MCP itself never
+  writes image bytes to disk, but your proxy's cache directory will — your
+  machine, your call; just make it consciously.
+- **PDPA note (Thailand):** because each recipient's device fetches directly,
+  your `/i/` access log is effectively a per-recipient read receipt — open
+  time, IP address, device model. Treat those logs as personal data.
+- Laptop + tunnel suits tests and small sends. For broadcasts at scale, use an
+  always-on server with `MCP_PUBLIC_URL` (this section) or a permanent host
+  via `base_url`.
+
+> Reverse-proxy caching approach field-tested and contributed by
+> [Norapat Limpagan](https://www.facebook.com/kidsmagic) — thank you!

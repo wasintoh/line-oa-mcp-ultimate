@@ -12,7 +12,7 @@ export const LINE_API_DATA_BASE = "https://api-data.line.me"; // for content / a
 
 // ---- Server identity ----
 export const SERVER_NAME = "line-oa-mcp-ultimate";
-export const SERVER_VERSION = "2.2.0";
+export const SERVER_VERSION = "2.2.1";
 
 // ---- Response sizing ----
 export const CHARACTER_LIMIT = 25_000; // truncate responses beyond this size

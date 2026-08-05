@@ -12,9 +12,9 @@ A Thai-language threat-model guide for shop owners is at
 
 | Version | Supported |
 |---|---|
-| 2.1.x | ✅ Full support — security fixes land here first |
-| 2.0.x | ⚠️ Critical fixes only |
-| < 2.0 | ❌ Not supported — please upgrade |
+| 2.2.x | ✅ Full support — security fixes land here first |
+| 2.1.x | ⚠️ Critical fixes only |
+| < 2.1 | ❌ Not supported — please upgrade |
 
 ## Reporting a vulnerability
 
@@ -129,11 +129,34 @@ hard-blocked as over-quota. This is a deliberate fail-safe — at zero remaining
 we would rather ask than assume — and is documented here so it is not filed as
 a bug.
 
+### 4. HTTP mode: the active OA is shared by every client (one instance = one agent)
+
+The active OA that [`line_use_oa`](src/tools/use-oa.ts) switches lives in
+process-wide module state ([`src/config/multi-oa.ts`](src/config/multi-oa.ts)).
+Since v2.2.1 the HTTP transport serves each request with a fresh server
+instance, but that state is — by design — shared across requests, which also
+means it is shared across every **client** of the same instance.
+
+- **Reach:** HTTP mode only, and only when several agents/teammates point at
+  the same instance. stdio spawns a private process per MCP host, so the
+  situation cannot occur there.
+- **Impact:** agent A's `line_use_oa` silently retargets agent B's next tool
+  call that omits the `oa` parameter — cross-tenant message misdelivery, and
+  a broadcast cannot be unsent.
+- **Mitigation today:** run **one instance per agent** (separate ports behind
+  the same proxy), or make every call pass the explicit `oa` parameter, which
+  always beats the shared switch. Since v2.2.1 the server also logs a loud
+  warning when a second distinct client initializes while a switch is active.
+- **Real fix:** per-session state (MCP stateful sessions). Deferred
+  deliberately — it reroutes OA resolution for every tool, so it belongs in a
+  minor release with its own tests, not a patch.
+
 ## Operational recommendations
 
 - Prefer **stdio** transport (no open port). If you need HTTP, keep the bind
   on `127.0.0.1` and set `MCP_HTTP_TOKEN`; put TLS termination in front for
-  anything remote. See [`docs/http-transport.md`](docs/http-transport.md).
+  anything remote, and in multi-agent setups run one instance per agent
+  (Known limitation #4). See [`docs/http-transport.md`](docs/http-transport.md).
 - `chmod 600 ~/.line-mcp/config.json`.
 - Issue **one token per OA** and rotate tokens in the LINE Developers Console
   if you suspect exposure; use `line_check_token` to verify validity/lifetime.

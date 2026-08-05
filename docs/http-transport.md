@@ -4,7 +4,7 @@ The standard install for `line-oa-mcp-ultimate` is **stdio** — every MCP host 
 
 This document is for the niche cases where you actually need HTTP:
 
-- An agency running one MCP instance shared by many teammates.
+- An agency running MCP instances on a shared server — **one instance per agent/teammate**, because the active OA switched by `line_use_oa` is shared per instance (see [Production deployment](#production-deployment)).
 - A hosted SaaS deployment behind a tunnel or load balancer.
 - Cowork's "Add custom connector" UI when you specifically want a URL-based connector instead of a managed local subprocess.
 
@@ -27,7 +27,7 @@ LINE_CHANNEL_ACCESS_TOKEN="YOUR_TOKEN" npm run start:http
 You should see:
 
 ```
-[line-oa-mcp-ultimate v1.0.4] Loaded 1 OA(s). Default: "default".
+[line-oa-mcp-ultimate vX.Y.Z] Loaded 1 OA(s). Default: "default".
 [line-oa-mcp-ultimate] Ready (http) — http://127.0.0.1:3000/mcp
   Health: http://127.0.0.1:3000/health
 ```
@@ -36,7 +36,7 @@ Verify the server is healthy:
 
 ```bash
 curl http://127.0.0.1:3000/health
-# → {"ok":true,"name":"line-oa-mcp-ultimate","version":"1.0.4"}
+# → {"ok":true,"name":"line-oa-mcp-ultimate","version":"X.Y.Z"}
 ```
 
 ## Configuration
@@ -117,6 +117,14 @@ When running for an agency or hosted service:
 
 - **Never bind to `0.0.0.0` directly.** Put the server behind a reverse proxy (Caddy, Nginx, Cloudflare Tunnel) that handles TLS. (Since v2.1 the server refuses a non-loopback bind unless `MCP_HTTP_TOKEN` is set.)
 - **Always set `MCP_HTTP_TOKEN`.** The built-in bearer check protects the MCP path itself; the proxy adds TLS so the token never travels in cleartext.
+- **One instance = one agent.** The active OA switched by `line_use_oa` is
+  process-wide state: every client of the same instance shares it, so agent
+  A's switch silently retargets agent B's next unqualified send — and a
+  broadcast cannot be unsent. Run one instance per agent/teammate (separate
+  ports behind the same proxy), or make every call pass the explicit `oa`
+  parameter, which always beats the shared switch. Since v2.2.1 the server
+  logs a loud warning when a second distinct client initializes while a
+  switch is active. (Full write-up: SECURITY.md → Known limitations #4.)
 - **One process per OA, or use multi-OA config.** Multiple tenants in the same process share env vars — use the JSON multi-OA config and per-call `oa` parameter.
 - **Health check** at `/health` returns `{"ok": true, ...}` — use it for liveness probes.
 - **Graceful shutdown** on `SIGINT` / `SIGTERM` (5s force-kill grace).
@@ -130,6 +138,7 @@ If you need additional allowed origins (e.g. a specific Cowork domain), set `MCP
 ## Why stdio is still the default
 
 - **No always-on process.** Cowork spawns the server when needed and tears it down when done.
+- **One process per host, automatically.** Each MCP host gets its own private server, so the shared-active-OA concern above simply cannot occur.
 - **No port to manage.** No localhost firewall, no tunnel, no DNS, no TLS.
 - **No infrastructure drift.** What works on one machine works on another with no setup.
 

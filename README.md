@@ -285,7 +285,7 @@ Or override per-call with the `oa` parameter on any tool.
 
 ### Advanced — HTTP transport (self-hosted)
 
-For agencies running a shared remote instance, the server also supports Streamable HTTP. See [docs/http-transport.md](docs/http-transport.md).
+For agencies and always-on servers, the server also supports Streamable HTTP — run **one instance per agent/teammate** (the active OA switched by `line_use_oa` is shared per instance). See [docs/http-transport.md](docs/http-transport.md).
 
 ---
 
@@ -340,9 +340,11 @@ This server operates with **live channel access tokens** — whoever holds the t
 
 ## Versioning
 
-This project follows [Semantic Versioning](https://semver.org/). Current release: **v2.2.0 "Zero-Hosting Release"** — full history in [CHANGELOG.md](CHANGELOG.md).
+This project follows [Semantic Versioning](https://semver.org/). Current release: **v2.2.1** — full history in [CHANGELOG.md](CHANGELOG.md).
 
-Latest changes (v2.2.0): **Image Hosting Layer** — attach a picture and `line_prepare_image` resizes it to every size LINE needs, hosts it automatically (own server / quick tunnel / manual-package fallback), and verifies every size is reachable **before** ever reporting success; `line_image_host_status` gives a read-only health check. See [CHANGELOG.md](CHANGELOG.md).
+Latest changes (v2.2.1): **HTTP transport fixed for real MCP clients** — every request now gets its own server instance (overlapping requests no longer 500), non-POST methods answer a clean 405, and self-hosted images serve immutable cache headers + `ETag`/304 so a reverse proxy or CDN can absorb an entire broadcast wave. Reported from production by [Norapat Limpagan](https://www.facebook.com/kidsmagic) — thank you! See [CHANGELOG.md](CHANGELOG.md).
+
+Previously (v2.2.0): **Image Hosting Layer** — attach a picture and `line_prepare_image` resizes it to every size LINE needs, hosts it automatically (own server / quick tunnel / manual-package fallback), and verifies every size is reachable **before** ever reporting success; `line_image_host_status` gives a read-only health check.
 
 Previously (v2.0.0): **+14 LINE Shopping tools** via the MyShop Open API — products, inventory, orders (incl. parcel labels), settlements, and checkout links. API-key only, no webhook/server, fully **opt-in** (registers only when a MyShop key is set) and **non-breaking** on the 34 messaging tools. See [RELEASE_NOTES_v2.0.0.md](RELEASE_NOTES_v2.0.0.md).
 

@@ -88,5 +88,6 @@ nano ~/.line-mcp/config.json      # หรือ: code ~/.line-mcp/config.json
 
 - `~/.line-mcp/config.json` อยู่ใน home directory นอก repo — ไม่เสี่ยงติด git (ถ้าเก็บไว้ที่อื่นในโปรเจค ต้องเพิ่มใน `.gitignore`)
 - **ห้ามเปิดไฟล์ config ตอน share screen / demo** — ในนั้นมี token จริงของทุก OA
+- ใช้โหมด HTTP หลายคน/หลาย agent → **1 instance ต่อ 1 agent** เพราะร้านที่สลับด้วย `line_use_oa` เป็นค่าร่วมกันทั้ง instance — รายละเอียดที่ [security-th.md](security-th.md) ข้อ 6.4
 - token re-issue ได้ที่ LINE Developers Console — ถ้าสงสัยว่าหลุด re-issue ทันที (ตัวเก่าใช้ไม่ได้ทันที)
 - เปลี่ยน config แล้วต้อง **restart Cowork** (`⌘ + Q`) ทุกครั้ง

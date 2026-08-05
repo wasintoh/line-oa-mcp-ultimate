@@ -5,6 +5,58 @@ All notable changes to `line-oa-mcp-ultimate` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] — 2026-08-05
+
+Patch release: the HTTP transport now survives real MCP clients, and
+self-hosted images cache properly behind proxies and CDNs. 100% backward
+compatible — no tool, schema, env var, or config key changed shape.
+
+### Changed
+
+- `GET /i/:key/:size` now serves `Cache-Control: public, max-age=31536000,
+  immutable` (was `max-age=86400`) plus an `ETag`, and answers a matching
+  `If-None-Match` with `304 Not Modified`. A prepared key's bytes can never
+  change (content-hash + random key), so each recipient device fetches a
+  picture once, and a reverse proxy / CDN can absorb an entire broadcast
+  wave — a ready-made nginx recipe is in
+  [docs/image-hosting.md](docs/image-hosting.md#scaling--caching-behind-a-reverse-proxy).
+- The MCP path in HTTP mode now answers `405 Method Not Allowed` to non-POST
+  methods (stateless JSON mode has no push channel or sessions). Clients
+  treat this as "no SSE stream offered" per the MCP spec; it also stops
+  vanished peers from parking dead sockets on long-running servers.
+
+### Fixed
+
+- **HTTP transport: overlapping requests no longer 500.** Every request built
+  a fresh transport but connected it to the one shared `McpServer`, so any
+  real client holding a GET (SSE) stream while POSTing hit the SDK's
+  "Already connected to a transport" error — HTTP mode was effectively
+  unusable with real MCP clients. Each request now gets its own server
+  instance (the official SDK stateless pattern, ~1 ms per request), and both
+  transport and server are closed when the response ends. Lone sequential
+  requests always worked, which is why single-shot tests stayed green — a
+  held-GET regression test now guards the real shape. Reported, together
+  with the caching and reverse-proxy suggestions, by
+  [Norapat Limpagan](https://www.facebook.com/kidsmagic) — thank you!
+  ขอบคุณครับ 🙏
+- **A client disconnecting mid-request-body no longer crashes the process.**
+  The request-body read sat outside the handler's try/catch, so a NAT reset
+  or mobile drop mid-POST rejected the async handler and Node's default
+  unhandled-rejection policy terminated the server (taking the in-memory
+  image store with it). Pre-existing before 2.2.1; found during release
+  review, reproduced with a raw-socket probe, and pinned by a regression
+  test. Such disconnects now log one quiet line instead of a stack trace.
+
+### Notes
+
+- HTTP mode is **one instance = one agent**: the active OA set by
+  `line_use_oa` is process-wide, so multiple agents sharing an instance can
+  retarget each other's sends. The server now logs a loud warning when a
+  second distinct client initializes while a switch is active; run one
+  instance per agent (separate ports) or pass `oa` explicitly per call.
+  Documented in [docs/http-transport.md](docs/http-transport.md) and
+  [SECURITY.md](SECURITY.md) known limitation #4.
+
 ## [2.2.0] — 2026-07-31 "Zero-Hosting Release"
 
 Theme: send images and Rich Messages with **zero hosting knowledge**. 100%
@@ -269,6 +321,8 @@ compatible — no existing tool, schema, env var, or config key changed shape.
 
 - Initial publish with placeholder package metadata — superseded by 1.0.1.
 
+[2.2.1]: https://github.com/wasintoh/line-oa-mcp-ultimate/compare/v2.2.0...v2.2.1
+[2.2.0]: https://github.com/wasintoh/line-oa-mcp-ultimate/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/wasintoh/line-oa-mcp-ultimate/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/wasintoh/line-oa-mcp-ultimate/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/wasintoh/line-oa-mcp-ultimate/compare/v1.0.4...v1.1.0
