@@ -5,6 +5,12 @@ All notable changes to `line-oa-mcp-ultimate` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] — 2026-08-05
+
+Docs-only release — no code changes beyond the version string. Republished
+so the npm package page picks up the refreshed README: the v2.2.1 fix
+banner, the new 2.2.1 logo (orange ".1"), and a refreshed package description.
+
 ## [2.2.1] — 2026-08-05
 
 Patch release: the HTTP transport now survives real MCP clients, and
@@ -321,6 +327,7 @@ compatible — no existing tool, schema, env var, or config key changed shape.
 
 - Initial publish with placeholder package metadata — superseded by 1.0.1.
 
+[2.2.2]: https://github.com/wasintoh/line-oa-mcp-ultimate/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/wasintoh/line-oa-mcp-ultimate/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/wasintoh/line-oa-mcp-ultimate/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/wasintoh/line-oa-mcp-ultimate/compare/v2.0.0...v2.1.0

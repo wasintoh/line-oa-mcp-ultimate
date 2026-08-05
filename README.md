@@ -342,7 +342,7 @@ This server operates with **live channel access tokens** — whoever holds the t
 
 ## Versioning
 
-This project follows [Semantic Versioning](https://semver.org/). Current release: **v2.2.1** — full history in [CHANGELOG.md](CHANGELOG.md).
+This project follows [Semantic Versioning](https://semver.org/). Current release: **v2.2.2** (docs-only republish of 2.2.1) — full history in [CHANGELOG.md](CHANGELOG.md).
 
 Latest changes (v2.2.1): **HTTP transport fixed for real MCP clients** — every request now gets its own server instance (overlapping requests no longer 500), non-POST methods answer a clean 405, and self-hosted images serve immutable cache headers + `ETag`/304 so a reverse proxy or CDN can absorb an entire broadcast wave. Reported from production by [Norapat Limpagan](https://www.facebook.com/kidsmagic) — thank you! See [CHANGELOG.md](CHANGELOG.md).
 
